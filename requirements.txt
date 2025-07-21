@@ -5,4 +5,4 @@ et_xmlfile==2.0.0
 openpyxl==3.1.5
 pillow==11.3.0
 tkcalendar==1.6.1
-flask==2.x.x
+flask
