@@ -8,3 +8,7 @@ tkcalendar==1.6.1
 flask
 flask_sqlalchemy
 flask_login
+flask_migrate
+flask_cors
+jwt
+flask_wtf
