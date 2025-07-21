@@ -1,0 +1,2349 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase/Sale Entry - Business Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Enhanced Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="header-card">
+                <div class="header-content">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <div class="brand-section">
+                                <h3 class="brand-title">Business Management</h3>
+                                <p class="brand-subtitle">Professional Edition</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <div class="title-section">
+                                <div class="main-title">
+                                    <h2 class="mb-0">Purchase/Sale Entry</h2>
+                                </div>
+                                <div class="sub-title">
+                                    <h4 class="mb-0">Business Management System</h4>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <div class="time-section">
+                                <div class="time-display">
+                                    <span class="time-label">Time</span>
+                                    <span class="time-value" id="currentTime">{{ current_time }}</span>
+                                </div>
+                                <div class="close-button">
+                                    <button class="btn-close-custom" onclick="window.close()">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upper Table - Purchase Entry (Exact replica of FoxPro) -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white py-2">
+                    <h6 class="mb-0">Purchase Entry</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered mb-0" id="purchaseTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>S.No.</th>
+                                    <th>Date</th>
+                                    <th>Name of the Party</th>
+                                    <th>Item</th>
+                                    <th>Bags</th>
+                                    <th>Sale</th>
+                                    <th>Balance</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchaseTableBody">
+                                <!-- Purchase entries will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lower Table - Sale Entry Table (FoxPro-style) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-success text-white py-2">
+                    <h6 class="mb-0">Sale Entry</h6>
+                </div>
+                <div class="card-body p-2">
+                    <!-- Header Row -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-1">
+                            <label class="form-label small">Bl.No</label>
+                            <input type="number" class="form-control form-control-sm" id="saleBillNo" name="saleBillNo" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Bill</label>
+                            <input type="number" class="form-control form-control-sm" id="saleBillSequence" name="saleBillSequence" value="1" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Date</label>
+                            <input type="date" class="form-control form-control-sm" id="saleDate" name="saleDate" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Code</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="salePartyCode" name="salePartyCode" placeholder="Code" required readonly>
+                                <button type="button" class="btn btn-outline-secondary" onclick="openSalePartySearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Party Name</label>
+                            <input type="text" class="form-control form-control-sm" id="salePartyName" name="salePartyName" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Bags</label>
+                            <input type="number" class="form-control form-control-sm" id="saleBags" name="saleBags" min="0" step="1" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Weight</label>
+                            <input type="number" class="form-control form-control-sm" id="saleWeight" name="saleWeight" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label small">Rate</label>
+                            <input type="number" class="form-control form-control-sm" id="saleRate" name="saleRate" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">Amount</label>
+                            <input type="number" class="form-control form-control-sm" id="saleAmount" name="saleAmount" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Sale Entries Table -->
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="saleEntriesTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>S.No.</th>
+                                    <th>Party Code</th>
+                                    <th>Party Name</th>
+                                    <th>Bags</th>
+                                    <th>Weight</th>
+                                    <th>Rate</th>
+                                    <th>Amount</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleEntriesTableBody">
+                                <!-- Sale entries will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-success btn-sm" onclick="addSaleEntry()">
+                                <i class="fas fa-plus"></i> Add Entry
+                            </button>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="saveAllSales()">
+                                <i class="fas fa-save"></i> Save All Sales
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm" onclick="clearSaleForm()">Clear</button>
+                            <button type="button" class="btn btn-info btn-sm" onclick="addNewPurchase()">New Purchase</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Section - Keyboard Shortcuts (Exact replica of FoxPro) -->
+    <div class="row mt-2">
+        <div class="col-12">
+            <div class="card bg-info text-white">
+                <div class="card-body py-1">
+                    <small>
+                        <strong>Keyboard Shortcuts:</strong> 
+                        ↑/PgUp/↓/PgDn-Scroll ←-Edit F5-Order F6-Find F7-Sale F8-Adjwt F9-Rt. F10-Spt Es
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Purchase Entry Modal -->
+<div class="modal fade" id="purchaseEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bright-modal">
+            <div class="modal-header bright-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>New Purchase Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bright-body">
+                <form id="purchaseForm">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label">Bill No</label>
+                            <input type="number" class="form-control" id="purchaseBillNo" name="purchaseBillNo" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="purchaseDate" name="purchaseDate" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Party Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="purchasePartyCode" name="purchasePartyCode" required readonly>
+                                <button type="button" class="btn btn-outline-secondary" onclick="openPurchasePartySearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Party Name</label>
+                            <input type="text" class="form-control" id="purchasePartyName" name="purchasePartyName" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Item Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="purchaseItemCode" name="purchaseItemCode" required readonly>
+                                <button type="button" class="btn btn-outline-secondary" onclick="openItemSearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" id="purchaseItemName" name="purchaseItemName" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Bags</label>
+                            <input type="number" class="form-control" id="purchaseBags" name="purchaseBags" min="0" step="1" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Weight</label>
+                            <input type="number" class="form-control" id="purchaseWeight" name="purchaseWeight" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Rate</label>
+                            <input type="number" class="form-control" id="purchaseRate" name="purchaseRate" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Amount</label>
+                            <input type="number" class="form-control" id="purchaseAmount" name="purchaseAmount" readonly>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePurchase()">Save Purchase</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Party Search Modal -->
+<div class="modal fade" id="partySearchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bright-modal">
+            <div class="modal-header bright-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>Select Party
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bright-body">
+                <input type="text" class="form-control bright-input mb-3" id="partySearchInput" placeholder="Search parties...">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="partySearchTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Place</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partySearchTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Search Modal -->
+<div class="modal fade" id="itemSearchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content bright-modal">
+            <div class="modal-header bright-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-box me-2"></i>Select Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bright-body">
+                <input type="text" class="form-control bright-input mb-3" id="itemSearchInput" placeholder="Search items...">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="itemSearchTable">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Rate</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemSearchTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentPurchaseId = null;
+let selectedPurchaseEntry = null;
+let parties = [];
+let items = [];
+let purchases = [];
+let saleEntries = []; // Array to store multiple sale entries
+let currentSaleEntryId = 1;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    setCurrentDate();
+    setCurrentTime();
+    loadParties();
+    loadItems();
+    loadPurchases();
+    setupEventListeners();
+    setupKeyboardShortcuts();
+});
+
+function setCurrentDate() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Set sale date
+    const saleDateField = document.getElementById('saleDate');
+    if (saleDateField) {
+        saleDateField.value = today;
+    }
+    
+    // Set purchase date
+    const purchaseDateField = document.getElementById('purchaseDate');
+    if (purchaseDateField) {
+        purchaseDateField.value = today;
+    }
+    
+    // Also set any other date fields that might exist
+    const allDateFields = document.querySelectorAll('input[type="date"]');
+    allDateFields.forEach(field => {
+        if (!field.value) {
+            field.value = today;
+        }
+    });
+}
+
+function setCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    document.getElementById('currentTime').textContent = timeString;
+    
+    // Update time every second
+    setInterval(setCurrentTime, 1000);
+}
+
+function setupEventListeners() {
+    // Sale party code field click to open search
+    document.getElementById('salePartyCode').addEventListener('click', function() {
+        openSalePartySearch();
+    });
+
+    // Purchase party code field click to open search
+    document.getElementById('purchasePartyCode').addEventListener('click', function() {
+        openPurchasePartySearch();
+    });
+
+    // Purchase item code field click to open search
+    document.getElementById('purchaseItemCode').addEventListener('click', function() {
+        openItemSearch();
+    });
+
+    // Party search input
+    document.getElementById('partySearchInput').addEventListener('input', function() {
+        searchParties(this.value);
+    });
+
+    // Item search input
+    document.getElementById('itemSearchInput').addEventListener('input', function() {
+        searchItems(this.value);
+    });
+
+    // Auto-calculate amounts and real-time updates
+    document.getElementById('saleBags').addEventListener('input', function() {
+        calculateSaleAmount();
+        updateRealTimeSaleBalance();
+    });
+    document.getElementById('saleRate').addEventListener('input', function() {
+        calculateSaleAmount();
+        updateRealTimeSaleBalance();
+    });
+
+    document.getElementById('purchaseBags').addEventListener('input', calculatePurchaseAmount);
+    document.getElementById('purchaseWeight').addEventListener('input', calculatePurchaseAmount);
+    document.getElementById('purchaseRate').addEventListener('input', calculatePurchaseAmount);
+
+    // Enter key to add new sale entry
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            e.preventDefault();
+            addSaleEntry();
+        }
+    });
+    
+    // Enhanced modal positioning and scrolling fixes
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.addEventListener('show.bs.modal', function() {
+            // Remove any existing backdrops except the first one
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure modal is properly centered
+            const modalDialog = this.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.margin = '1.75rem auto';
+                modalDialog.style.maxHeight = 'calc(100vh - 3.5rem)';
+                modalDialog.style.display = 'flex';
+                modalDialog.style.alignItems = 'center';
+                modalDialog.style.justifyContent = 'center';
+            }
+            
+            // Allow body scrolling
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+            
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.opacity = '0.3';
+                    backdrop.style.pointerEvents = 'none';
+                    backdrop.style.transition = 'none';
+                }
+            }, 10);
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // Remove any additional backdrops that might have been created
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure modal content is scrollable if needed
+            const modalContent = this.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.maxHeight = 'calc(100vh - 3.5rem)';
+                modalContent.style.overflowY = 'auto';
+            }
+            
+            // Ensure modal body is scrollable
+            const modalBody = this.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.style.maxHeight = 'calc(100vh - 200px)';
+                modalBody.style.overflowY = 'auto';
+            }
+            
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.opacity = '0.3';
+                    backdrop.style.pointerEvents = 'none';
+                    backdrop.style.transition = 'none';
+                }
+                // Focus on search input if it exists
+                const searchInput = this.querySelector('.bright-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 10);
+        });
+        
+        // Prevent input events from creating additional backdrops
+        modal.addEventListener('input', function(e) {
+            // Remove any additional backdrops that might be created during typing
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure the remaining backdrop stays at correct opacity
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.opacity = '0.3';
+                backdrop.style.pointerEvents = 'none';
+                backdrop.style.transition = 'none';
+            }
+        });
+        
+        // Handle modal hide to restore normal scrolling
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Restore normal body scrolling
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    });
+}
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch(e.key) {
+            case 'F5':
+                e.preventDefault();
+                refreshData();
+                break;
+            case 'F6':
+                e.preventDefault();
+                openSalePartySearch();
+                break;
+            case 'F7':
+                e.preventDefault();
+                saveSale();
+                break;
+            case 'F8':
+                e.preventDefault();
+                addNewPurchase();
+                break;
+            case 'F9':
+                e.preventDefault();
+                calculateSaleAmount();
+                break;
+            case 'F10':
+                e.preventDefault();
+                clearSaleForm();
+                break;
+        }
+    });
+}
+
+function loadParties() {
+    fetch('/api/parties')
+        .then(response => response.json())
+        .then(data => {
+            parties = data.parties || [];
+        })
+        .catch(error => console.error('Error loading parties:', error));
+}
+
+function loadItems() {
+    fetch('/api/items')
+        .then(response => response.json())
+        .then(data => {
+            items = data.items || [];
+        })
+        .catch(error => console.error('Error loading items:', error));
+}
+
+function loadPurchases() {
+    console.log('Loading purchases...');
+    fetch('/api/purchases')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Purchases loaded:', data);
+            purchases = data.purchases || [];
+            displayPurchases();
+        })
+        .catch(error => {
+            console.error('Error loading purchases:', error);
+            showAlert('Error loading purchases: ' + error.message, 'error');
+        });
+}
+
+function displayPurchases() {
+    console.log('Displaying purchases:', purchases);
+    const tbody = document.getElementById('purchaseTableBody');
+    if (!tbody) {
+        console.error('Purchase table body not found!');
+        return;
+    }
+    tbody.innerHTML = '';
+    
+    purchases.forEach((purchase, index) => {
+        const row = tbody.insertRow();
+        
+        // Calculate sale and balance
+        const totalBags = purchase.qty || 0;
+        const soldBags = purchase.sold_bags || 0;
+        const balance = totalBags - soldBags;
+        
+        // Alternate row colors like FoxPro
+        if (index % 2 === 0) {
+            row.className = 'table-primary';
+        } else {
+            row.className = 'table-secondary';
+        }
+        
+        // Add data attribute for real-time updates
+        row.setAttribute('data-purchase-id', purchase.id);
+        
+        row.innerHTML = `
+            <td>${purchase.id || index + 1}</td>
+            <td>${new Date(purchase.bill_date).toLocaleDateString()}</td>
+            <td>${purchase.party_nm || 'Unknown'}</td>
+            <td>${purchase.it_nm || 'Unknown'}</td>
+            <td>${totalBags}</td>
+            <td>${soldBags}</td>
+            <td>${balance}</td>
+            <td>
+                <button class="btn btn-sm btn-success" onclick="selectPurchase(${purchase.id})">
+                    Select
+                </button>
+            </td>
+        `;
+        
+        // Make row clickable for editing
+        row.style.cursor = 'pointer';
+        row.onclick = () => selectPurchase(purchase.id);
+    });
+}
+
+function selectPurchase(purchaseId) {
+    currentPurchaseId = purchaseId;
+    selectedPurchaseEntry = purchases.find(p => p.id === purchaseId);
+    
+    if (selectedPurchaseEntry) {
+        // Remove previous selection highlighting
+        document.querySelectorAll('#purchaseTableBody tr').forEach(row => {
+            row.classList.remove('purchase-row-selected');
+        });
+        
+        // Add highlighting to selected row
+        const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${purchaseId}"]`);
+        if (selectedRow) {
+            selectedRow.classList.add('purchase-row-selected');
+        }
+        
+        // Fill header fields with purchase data
+        document.getElementById('saleBillNo').value = selectedPurchaseEntry.bill_no || '';
+        document.getElementById('saleDate').value = new Date(selectedPurchaseEntry.bill_date).toLocaleDateString();
+        document.getElementById('salePartyCode').value = selectedPurchaseEntry.party_cd || '';
+        document.getElementById('salePartyName').value = selectedPurchaseEntry.party_nm || '';
+        
+        // Calculate available bags
+        const totalBags = selectedPurchaseEntry.qty || 0;
+        const soldBags = selectedPurchaseEntry.sold_bags || 0;
+        const availableBags = totalBags - soldBags;
+        
+        // Update max bags display
+        const maxBagsElement = document.getElementById('maxBags');
+        if (maxBagsElement) {
+            maxBagsElement.textContent = availableBags;
+        }
+        
+        // Clear existing sale entries
+        saleEntries = [];
+        currentSaleEntryId = 1;
+        displaySaleEntries();
+        
+        showAlert(`Purchase ${purchaseId} selected! Available bags: ${availableBags}`, 'success');
+    }
+}
+
+function addNewPurchase() {
+    // Clear purchase form
+    document.getElementById('purchaseForm').reset();
+    setCurrentDate();
+    
+    // Show purchase modal
+    new bootstrap.Modal(document.getElementById('purchaseEntryModal')).show();
+}
+
+function savePurchase() {
+    const formData = new FormData(document.getElementById('purchaseForm'));
+    
+    const data = {
+        bill_no: parseInt(formData.get('purchaseBillNo')),
+        bill_date: formData.get('purchaseDate'),
+        party_cd: formData.get('purchasePartyCode'),
+        it_cd: formData.get('purchaseItemCode'),
+        qty: parseFloat(formData.get('purchaseBags')),
+        tot_smt: parseFloat(formData.get('purchaseWeight')),
+        rate: parseFloat(formData.get('purchaseRate')),
+        sal_amt: parseFloat(formData.get('purchaseAmount')),
+        tot_amt: parseFloat(formData.get('purchaseAmount')),
+        remark: 'Purchase entry'
+    };
+    
+    fetch('/api/purchases', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Purchase saved successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('purchaseEntryModal')).hide();
+            loadPurchases();
+            clearPurchaseForm();
+        } else {
+            showAlert(data.message || 'Failed to save purchase', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving purchase:', error);
+        showAlert('Error saving purchase', 'error');
+    });
+}
+
+function addSaleEntry() {
+    if (!currentPurchaseId) {
+        showAlert('Please select a purchase entry first!', 'warning');
+        return;
+    }
+    
+    // Get values from header fields
+    const partyCode = document.getElementById('salePartyCode').value;
+    const partyName = document.getElementById('salePartyName').value;
+    const bags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const weight = parseFloat(document.getElementById('saleWeight').value) || 0;
+    const rate = parseFloat(document.getElementById('saleRate').value) || 0;
+    const amount = bags * rate;
+    
+    // Validate required fields
+    if (!partyCode || !bags || !rate) {
+        showAlert('Please fill Party Code, Bags, and Rate!', 'warning');
+        return;
+    }
+    
+    // Check if sale bags exceed available balance
+    if (selectedPurchaseEntry) {
+        const totalBags = selectedPurchaseEntry.qty || 0;
+        const soldBags = selectedPurchaseEntry.sold_bags || 0;
+        const balance = totalBags - soldBags;
+        
+        // Calculate total bags already in sale entries
+        const totalSaleBags = saleEntries.reduce((sum, entry) => sum + entry.bags, 0);
+        const remainingBags = balance - totalSaleBags;
+        
+        if (bags > remainingBags) {
+            showAlert(`Cannot sell ${bags} bags. Only ${remainingBags} bags available!`, 'error');
+            return;
+        }
+    }
+    
+    // Add to sale entries array
+    const saleEntry = {
+        id: currentSaleEntryId++,
+        partyCode: partyCode,
+        partyName: partyName,
+        bags: bags,
+        weight: weight,
+        rate: rate,
+        amount: amount
+    };
+    
+    saleEntries.push(saleEntry);
+    displaySaleEntries();
+    
+    // Update real-time balance immediately
+    updateRealTimeSaleBalance();
+    
+    // Clear header fields for next entry
+    clearHeaderFields();
+    
+    showAlert(`Sale entry ${saleEntry.id} added! Press Enter or click Add Entry for more.`, 'info');
+}
+
+function displaySaleEntries() {
+    const tbody = document.getElementById('saleEntriesTableBody');
+    tbody.innerHTML = '';
+    
+    saleEntries.forEach((entry, index) => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${entry.id}</td>
+            <td>
+                <input type="text" class="form-control form-control-sm" value="${entry.partyCode}" 
+                       onchange="updateSaleEntry(${entry.id}, 'partyCode', this.value)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" value="${entry.partyName}" 
+                       onchange="updateSaleEntry(${entry.id}, 'partyName', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.bags}" 
+                       onchange="updateSaleEntry(${entry.id}, 'bags', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.weight}" 
+                       onchange="updateSaleEntry(${entry.id}, 'weight', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.rate}" 
+                       onchange="updateSaleEntry(${entry.id}, 'rate', this.value)">
+            </td>
+            <td>${entry.amount.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-sm btn-danger" onclick="removeSaleEntry(${entry.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        // Alternate row colors
+        if (index % 2 === 0) {
+            row.className = 'table-primary';
+        } else {
+            row.className = 'table-secondary';
+        }
+    });
+    
+    // Update real-time balance tracking
+    updateRealTimeBalance();
+}
+
+function updateSaleEntry(entryId, field, value) {
+    const entry = saleEntries.find(e => e.id === entryId);
+    if (entry) {
+        entry[field] = value;
+        
+        // Recalculate amount if bags or rate changed
+        if (field === 'bags' || field === 'rate') {
+            entry.amount = parseFloat(entry.bags || 0) * parseFloat(entry.rate || 0);
+        }
+        
+        displaySaleEntries();
+        updateRealTimeSaleBalance();
+        showAlert(`Entry ${entryId} updated!`, 'info');
+    }
+}
+
+function removeSaleEntry(entryId) {
+    saleEntries = saleEntries.filter(entry => entry.id !== entryId);
+    displaySaleEntries();
+    updateRealTimeSaleBalance();
+    showAlert('Sale entry removed!', 'info');
+}
+
+function updateRealTimeSaleBalance() {
+    if (!selectedPurchaseEntry) return;
+    
+    const totalBags = selectedPurchaseEntry.qty || 0;
+    const soldBags = selectedPurchaseEntry.sold_bags || 0;
+    const currentSaleBags = saleEntries.reduce((sum, entry) => sum + parseFloat(entry.bags || 0), 0);
+    
+    // Get current input values from sale form
+    const currentInputBags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const totalCurrentSale = currentSaleBags + currentInputBags;
+    
+    // Update the purchase table display with real-time data
+    const purchaseRows = document.querySelectorAll('#purchaseTableBody tr');
+    purchaseRows.forEach(row => {
+        const cells = row.cells;
+        const purchaseId = row.getAttribute('data-purchase-id');
+        
+        if (purchaseId && parseInt(purchaseId) === currentPurchaseId) {
+            // Update Sale and Balance columns for the selected purchase
+            const saleCell = cells[5]; // Sale column
+            const balanceCell = cells[6]; // Balance column
+            
+            if (saleCell && balanceCell) {
+                const totalSold = soldBags + totalCurrentSale;
+                const balance = totalBags - totalSold;
+                
+                // Update with live values
+                saleCell.textContent = totalSold;
+                balanceCell.textContent = balance;
+                
+                // Visual feedback for real-time updates
+                saleCell.style.backgroundColor = '#fff3cd';
+                balanceCell.style.backgroundColor = '#fff3cd';
+                
+                // Highlight negative balance
+                if (balance < 0) {
+                    balanceCell.style.color = 'red';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#f8d7da';
+                } else if (balance === 0) {
+                    balanceCell.style.color = 'orange';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#fff3cd';
+                } else {
+                    balanceCell.style.color = 'green';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#d4edda';
+                }
+                
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    saleCell.style.backgroundColor = '';
+                    balanceCell.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+    });
+}
+
+function updateRealTimeBalance() {
+    if (!selectedPurchaseEntry) return;
+    
+    const totalBags = selectedPurchaseEntry.qty || 0;
+    const soldBags = selectedPurchaseEntry.sold_bags || 0;
+    const currentSaleBags = saleEntries.reduce((sum, entry) => sum + parseFloat(entry.bags || 0), 0);
+    
+    // Update the purchase table display with real-time data
+    const purchaseRows = document.querySelectorAll('#purchaseTableBody tr');
+    purchaseRows.forEach(row => {
+        const cells = row.cells;
+        const purchaseId = row.getAttribute('data-purchase-id');
+        
+        if (purchaseId && parseInt(purchaseId) === currentPurchaseId) {
+            // Update Sale and Balance columns for the selected purchase
+            const saleCell = cells[5]; // Sale column
+            const balanceCell = cells[6]; // Balance column
+            
+            if (saleCell && balanceCell) {
+                const totalSold = soldBags + currentSaleBags;
+                const balance = totalBags - totalSold;
+                
+                saleCell.textContent = totalSold;
+                balanceCell.textContent = balance;
+                
+                // Highlight negative balance
+                if (balance < 0) {
+                    balanceCell.style.color = 'red';
+                    balanceCell.style.fontWeight = 'bold';
+                } else {
+                    balanceCell.style.color = '';
+                    balanceCell.style.fontWeight = '';
+                }
+            }
+        }
+    });
+}
+
+function clearHeaderFields() {
+    document.getElementById('salePartyCode').value = '';
+    document.getElementById('salePartyName').value = '';
+    document.getElementById('saleBags').value = '';
+    document.getElementById('saleWeight').value = '';
+    document.getElementById('saleRate').value = '';
+    document.getElementById('saleAmount').value = '';
+    
+    // Clear real-time updates
+    updateRealTimeSaleBalance();
+}
+
+function saveAllSales() {
+    if (saleEntries.length === 0) {
+        showAlert('No sale entries to save!', 'warning');
+        return;
+    }
+    
+    if (!currentPurchaseId) {
+        showAlert('Please select a purchase entry first!', 'warning');
+        return;
+    }
+    
+    // Get header values
+    const billNo = parseInt(document.getElementById('saleBillNo').value);
+    const billDate = document.getElementById('saleDate').value;
+    
+    if (!billNo || !billDate) {
+        showAlert('Please fill Bill No and Date!', 'warning');
+        return;
+    }
+    
+    // Save all sale entries
+    let savedCount = 0;
+    let totalEntries = saleEntries.length;
+    
+    saleEntries.forEach((entry, index) => {
+        const data = {
+            purchase_id: currentPurchaseId,
+            bill_no: billNo,
+            bill_date: billDate,
+            party_cd: entry.partyCode,
+            it_cd: selectedPurchaseEntry ? selectedPurchaseEntry.it_cd : 'DEFAULT',
+            qty: entry.bags,
+            tot_smt: entry.weight,
+            rate: entry.rate,
+            sal_amt: entry.amount,
+            tot_amt: entry.amount,
+            remark: 'Sale entry'
+        };
+        
+        fetch('/api/sales', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            savedCount++;
+            
+            if (result.success) {
+                if (savedCount === totalEntries) {
+                    showAlert(`All ${totalEntries} sale entries saved successfully!`, 'success');
+                    loadPurchases(); // Refresh to update balances
+                    clearAllSaleData();
+                    
+                    // Auto-increment bill sequence
+                    const currentSeq = parseInt(document.getElementById('saleBillSequence').value);
+                    document.getElementById('saleBillSequence').value = currentSeq + 1;
+                }
+            } else {
+                showAlert(`Failed to save sale entry ${entry.id}: ${result.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving sale entry:', error);
+            showAlert(`Error saving sale entry ${entry.id}`, 'error');
+        });
+    });
+}
+
+function clearAllSaleData() {
+    saleEntries = [];
+    currentSaleEntryId = 1;
+    displaySaleEntries();
+    clearHeaderFields();
+    clearSaleForm();
+}
+
+function openSalePartySearch() {
+    searchParties('');
+}
+
+function openPurchasePartySearch() {
+    searchParties('');
+}
+
+function openItemSearch() {
+    searchItems('');
+}
+
+function searchParties(query) {
+    const filteredParties = parties.filter(party => 
+        party.party_cd.toLowerCase().includes(query.toLowerCase()) ||
+        party.party_nm.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    const tbody = document.getElementById('partySearchTableBody');
+    tbody.innerHTML = '';
+    
+    filteredParties.forEach(party => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${party.party_cd}</td>
+            <td>${party.party_nm}</td>
+            <td>${party.phone || '-'}</td>
+            <td>${party.place || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="selectParty('${party.party_cd}', '${party.party_nm}')">
+                    Select
+                </button>
+            </td>
+        `;
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('partySearchModal'));
+    modal.show();
+    
+    // Ensure modal is properly positioned after showing
+    setTimeout(() => {
+        const modalElement = document.getElementById('partySearchModal');
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.margin = '5vh auto';
+            modalDialog.style.maxHeight = '90vh';
+            modalDialog.style.display = 'flex';
+            modalDialog.style.alignItems = 'center';
+            modalDialog.style.justifyContent = 'center';
+        }
+        
+        // Ensure modal content is properly sized
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.height = '90vh';
+        }
+        
+        // Ensure modal body is scrollable
+        const modalBody = modalElement.querySelector('.modal-body');
+        if (modalBody) {
+            modalBody.style.maxHeight = 'calc(90vh - 120px)';
+            modalBody.style.height = 'calc(90vh - 120px)';
+            modalBody.style.overflowY = 'auto';
+        }
+    }, 100);
+}
+
+function searchItems(query) {
+    const filteredItems = items.filter(item => 
+        item.it_cd.toLowerCase().includes(query.toLowerCase()) ||
+        item.it_nm.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    const tbody = document.getElementById('itemSearchTableBody');
+    tbody.innerHTML = '';
+    
+    filteredItems.forEach(item => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${item.it_cd}</td>
+            <td>${item.it_nm}</td>
+            <td>${item.category || '-'}</td>
+            <td>${item.rate || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="selectItem('${item.it_cd}', '${item.it_nm}', ${item.rate || 0})">
+                    Select
+                </button>
+            </td>
+        `;
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('itemSearchModal'));
+    modal.show();
+    
+    // Ensure modal is properly positioned after showing
+    setTimeout(() => {
+        const modalElement = document.getElementById('itemSearchModal');
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.margin = '5vh auto';
+            modalDialog.style.maxHeight = '90vh';
+            modalDialog.style.display = 'flex';
+            modalDialog.style.alignItems = 'center';
+            modalDialog.style.justifyContent = 'center';
+        }
+        
+        // Ensure modal content is properly sized
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.height = '90vh';
+        }
+        
+        // Ensure modal body is scrollable
+        const modalBody = modalElement.querySelector('.modal-body');
+        if (modalBody) {
+            modalBody.style.maxHeight = 'calc(90vh - 120px)';
+            modalBody.style.height = 'calc(90vh - 120px)';
+            modalBody.style.overflowY = 'auto';
+        }
+    }, 100);
+}
+
+function selectParty(code, name) {
+    // Determine which form is active
+    const purchaseModal = document.getElementById('purchaseEntryModal');
+    const isPurchaseModalOpen = purchaseModal.classList.contains('show');
+    
+    if (isPurchaseModalOpen) {
+        document.getElementById('purchasePartyCode').value = code;
+        document.getElementById('purchasePartyName').value = name;
+    } else {
+        document.getElementById('salePartyCode').value = code;
+        document.getElementById('salePartyName').value = name;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('partySearchModal')).hide();
+}
+
+function selectItem(code, name, rate) {
+    document.getElementById('purchaseItemCode').value = code;
+    document.getElementById('purchaseItemName').value = name;
+    document.getElementById('purchaseRate').value = rate;
+    
+    bootstrap.Modal.getInstance(document.getElementById('itemSearchModal')).hide();
+    calculatePurchaseAmount();
+}
+
+function calculateSaleAmount() {
+    const bags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const rate = parseFloat(document.getElementById('saleRate').value) || 0;
+    
+    // Calculate amount based on bags and rate (rate * bags)
+    const amount = bags * rate;
+    document.getElementById('saleAmount').value = amount.toFixed(2);
+}
+
+function calculatePurchaseAmount() {
+    const bags = parseFloat(document.getElementById('purchaseBags').value) || 0;
+    const weight = parseFloat(document.getElementById('purchaseWeight').value) || 0;
+    const rate = parseFloat(document.getElementById('purchaseRate').value) || 0;
+    
+    // Calculate amount based on weight and rate
+    const amount = weight * rate;
+    document.getElementById('purchaseAmount').value = amount.toFixed(2);
+}
+
+function clearSaleForm() {
+    // Clear header fields
+    document.getElementById('saleBillNo').value = '';
+    document.getElementById('saleDate').value = '';
+    document.getElementById('salePartyCode').value = '';
+    document.getElementById('salePartyName').value = '';
+    document.getElementById('saleBags').value = '';
+    document.getElementById('saleWeight').value = '';
+    document.getElementById('saleRate').value = '';
+    document.getElementById('saleAmount').value = '';
+    
+    // Clear sale entries
+    saleEntries = [];
+    currentSaleEntryId = 1;
+    displaySaleEntries();
+    
+    // Reset purchase selection
+    currentPurchaseId = null;
+    selectedPurchaseEntry = null;
+    
+    // Clear real-time updates
+    updateRealTimeSaleBalance();
+    
+    setCurrentDate();
+    document.getElementById('saleBillSequence').value = 1;
+}
+
+function clearPurchaseForm() {
+    document.getElementById('purchaseForm').reset();
+    setCurrentDate();
+    document.getElementById('purchasePartyName').value = '';
+    document.getElementById('purchaseItemName').value = '';
+    document.getElementById('purchaseAmount').value = '';
+}
+
+function refreshData() {
+    loadPurchases();
+    showAlert('Data refreshed!', 'info');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+</script>
+
+<style>
+/* FoxPro-style styling */
+.card {
+    border: 2px solid #333;
+    border-radius: 0;
+}
+
+.card-header {
+    border-bottom: 2px solid #333;
+    border-radius: 0;
+}
+
+.table {
+    font-size: 0.9rem;
+}
+
+.table th {
+    background-color: #333;
+    color: white;
+    border: 1px solid #666;
+    font-weight: bold;
+    text-align: center;
+}
+
+.table td {
+    border: 1px solid #ccc;
+    padding: 0.25rem;
+}
+
+.table-primary {
+    background-color: #e3f2fd !important;
+}
+
+.table-secondary {
+    background-color: #f3e5f5 !important;
+}
+
+.form-control {
+    border: 1px solid #333;
+    border-radius: 0;
+    font-size: 0.9rem;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-label {
+    font-weight: bold;
+    font-size: 0.8rem;
+    margin-bottom: 0.1rem;
+}
+
+.btn {
+    border-radius: 0;
+    font-size: 0.9rem;
+}
+
+/* FoxPro-style header */
+.bg-dark {
+    background-color: #333 !important;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.bg-primary {
+    background-color: #007bff !important;
+}
+
+.bg-success {
+    background-color: #28a745 !important;
+}
+
+.bg-info {
+    background-color: #17a2b8 !important;
+}
+
+/* Party selection styling */
+#salePartyCode, #purchasePartyCode, #purchaseItemCode {
+    cursor: pointer;
+    background-color: #f8f9fa;
+}
+
+#salePartyCode:hover, #purchasePartyCode:hover, #purchaseItemCode:hover {
+    background-color: #e9ecef;
+}
+
+.input-group .btn {
+    border-left: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .form-control {
+        font-size: 0.8rem;
+    }
+}
+
+/* Amount field styling */
+#saleAmount {
+    font-weight: bold;
+    background-color: #f8f9fa;
+    text-align: right;
+    padding-right: 10px;
+}
+
+#saleAmount:read-only {
+    background-color: #e9ecef;
+    color: #495057;
+}
+
+/* Editable table styling */
+#saleEntriesTable input {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 0.85rem;
+}
+
+#saleEntriesTable input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+/* Negative balance highlighting */
+.negative-balance {
+    color: red !important;
+    font-weight: bold !important;
+}
+
+/* Modal styling */
+.modal-content {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: none;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border: none;
+    padding: 20px 25px;
+}
+
+.modal-header h5 {
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding: 20px 25px;
+}
+
+/* Search input styling */
+.search-input {
+    border-radius: 25px;
+    border: 3px solid #007bff;
+    padding: 15px 25px;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    background-color: white !important;
+    color: #333 !important;
+    font-weight: 500;
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+    z-index: 10002 !important;
+    position: relative !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+.search-input:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 0 0.3rem rgba(0, 123, 255, 0.4);
+    outline: none;
+    background-color: #f8f9fa;
+    transform: scale(1.02);
+}
+
+.search-input::placeholder {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+/* Fix modal backdrop issues */
+.modal-backdrop {
+    opacity: 0.3 !important;
+}
+
+.modal.show {
+    z-index: 9999 !important;
+}
+
+.modal-dialog {
+    z-index: 10000 !important;
+}
+
+.modal-content {
+    z-index: 10001 !important;
+}
+
+/* Remove header branding */
+.header-branding {
+    display: none !important;
+}
+
+/* Selected purchase highlighting */
+.purchase-row-selected {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.purchase-row-selected td {
+    border-color: #28a745 !important;
+}
+
+.purchase-row-selected .btn {
+    background-color: white !important;
+    color: #28a745 !important;
+    border-color: white !important;
+}
+
+/* Modern UI improvements */
+.card {
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+    color: #495057;
+}
+
+.table {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table th {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-align: center;
+    padding: 12px 8px;
+}
+
+.table td {
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    vertical-align: middle;
+}
+
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Alert styling */
+.alert {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced modal styling for better visibility and centering */
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+
+.modal-content {
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+    /* Ensure search inputs are always visible and bright */
+    .bright-input {
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 2px solid #4a90e2 !important;
+        border-radius: 8px !important;
+        padding: 12px 16px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        box-shadow: 0 2px 4px rgba(74,144,226,0.2) !important;
+        transition: all 0.3s ease !important;
+        z-index: 10002 !important;
+        position: relative !important;
+    }
+    
+    .bright-input:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.2) !important;
+        background: #ffffff !important;
+        color: #333333 !important;
+    }
+    
+    .bright-input::placeholder {
+        color: #6c757d !important;
+        opacity: 1 !important;
+    }
+
+    /* Enhanced Header Styling - Desktop */
+    .header-card {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+    }
+    
+    .header-content {
+        padding: 20px 25px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .brand-section {
+        color: white;
+    }
+    
+    .brand-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(45deg, #ffffff, #e8f4fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .brand-subtitle {
+        font-size: 0.9rem;
+        margin: 5px 0 0 0;
+        color: #bdc3c7;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .title-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .main-title {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        padding: 8px 20px;
+        border-radius: 25px;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+    
+    .main-title:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+    }
+    
+    .main-title h2 {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .sub-title {
+        background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+        padding: 6px 16px;
+        border-radius: 20px;
+        box-shadow: 0 3px 12px rgba(26, 188, 156, 0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+    
+    .sub-title:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(26, 188, 156, 0.5);
+    }
+    
+    .sub-title h4 {
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .time-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    
+    .time-display {
+        text-align: center;
+        background: rgba(255,255,255,0.1);
+        padding: 8px 15px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .time-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #bdc3c7;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    
+    .time-value {
+        display: block;
+        font-size: 1.2rem;
+        color: white;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .close-button {
+        margin-top: 5px;
+    }
+    
+    .btn-close-custom {
+        background: rgba(231, 76, 60, 0.9);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    
+    .btn-close-custom:hover {
+        background: rgba(231, 76, 60, 1);
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+    
+    /* Mobile Responsive Header */
+    @media (max-width: 768px) {
+        .header-card {
+            border-radius: 10px;
+            margin: 0 -10px;
+        }
+        
+        .header-content {
+            padding: 15px 20px;
+        }
+        
+        .brand-title {
+            font-size: 1.4rem;
+        }
+        
+        .brand-subtitle {
+            font-size: 0.8rem;
+        }
+        
+        .main-title {
+            padding: 6px 15px;
+            border-radius: 20px;
+        }
+        
+        .main-title h2 {
+            font-size: 1.1rem;
+        }
+        
+        .sub-title {
+            padding: 4px 12px;
+            border-radius: 15px;
+        }
+        
+        .sub-title h4 {
+            font-size: 0.9rem;
+        }
+        
+        .time-display {
+            padding: 6px 12px;
+            border-radius: 10px;
+        }
+        
+        .time-value {
+            font-size: 1rem;
+        }
+        
+        .btn-close-custom {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+    
+    /* Extra Small Mobile Devices */
+    @media (max-width: 576px) {
+        .header-content {
+            padding: 12px 15px;
+        }
+        
+        .brand-title {
+            font-size: 1.2rem;
+        }
+        
+        .brand-subtitle {
+            font-size: 0.7rem;
+        }
+        
+        .main-title {
+            padding: 5px 12px;
+        }
+        
+        .main-title h2 {
+            font-size: 1rem;
+        }
+        
+        .sub-title {
+            padding: 3px 10px;
+        }
+        
+        .sub-title h4 {
+            font-size: 0.8rem;
+        }
+        
+        .time-display {
+            padding: 5px 10px;
+        }
+        
+        .time-value {
+            font-size: 0.9rem;
+        }
+        
+        .time-label {
+            font-size: 0.65rem;
+        }
+    }
+    
+    /* Mobile Header Layout Adjustments */
+    @media (max-width: 768px) {
+        .header-content .row {
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .header-content .col-md-3,
+        .header-content .col-md-6 {
+            text-align: center !important;
+        }
+        
+        .time-section {
+            align-items: center;
+            flex-direction: row;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .close-button {
+            margin-top: 0;
+        }
+    }
+    
+    /* Override modal backdrop for better visibility */
+    .modal-backdrop {
+        opacity: 0.3 !important;
+        pointer-events: none !important;
+    }
+    
+    .modal-backdrop.show {
+        opacity: 0.3 !important;
+        pointer-events: none !important;
+    }
+    
+    /* Ensure modal content is always bright */
+    .modal-content {
+        background: #ffffff !important;
+        color: #333333 !important;
+    }
+    
+    .modal-body {
+        background: #ffffff !important;
+        color: #333333 !important;
+    }
+    
+    /* Prevent any darkening effects on inputs */
+    .modal input,
+    .modal textarea,
+    .modal select {
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 2px solid #4a90e2 !important;
+    }
+    
+    .modal input:focus,
+    .modal textarea:focus,
+    .modal select:focus {
+        background: #ffffff !important;
+        color: #333333 !important;
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102,126,234,0.2) !important;
+    }
+    
+    /* Prevent additional modal backdrops from being created */
+    .modal-backdrop + .modal-backdrop {
+        display: none !important;
+    }
+    
+    /* Ensure only one backdrop exists */
+    .modal-backdrop:not(:first-of-type) {
+        display: none !important;
+    }
+    
+    /* Prevent any additional overlays */
+    .modal::before,
+    .modal::after {
+        display: none !important;
+    }
+    
+    /* Lock backdrop opacity to prevent changes */
+    .modal-backdrop {
+        opacity: 0.3 !important;
+        pointer-events: none !important;
+        transition: none !important;
+    }
+    
+    /* Prevent any JavaScript from changing backdrop opacity */
+    .modal-backdrop.show {
+        opacity: 0.3 !important;
+        pointer-events: none !important;
+        transition: none !important;
+    }
+    
+    /* Mobile Responsive Styles for Main Content */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 10px;
+        }
+        
+        .card {
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .card-header {
+            padding: 8px 12px;
+        }
+        
+        .card-header h6 {
+            font-size: 0.9rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 6px 4px;
+            font-size: 0.75rem;
+        }
+        
+        .form-control-sm {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+        
+        .form-label {
+            font-size: 0.75rem;
+            margin-bottom: 2px;
+        }
+        
+        .btn-sm {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+        
+        .input-group-sm > .form-control {
+            font-size: 0.8rem;
+            padding: 4px 8px;
+        }
+        
+        .input-group-sm > .btn {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+        }
+    }
+    
+    /* Extra Small Mobile Devices */
+    @media (max-width: 576px) {
+        .container-fluid {
+            padding: 5px;
+        }
+        
+        .card {
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .card-header {
+            padding: 6px 10px;
+        }
+        
+        .card-header h6 {
+            font-size: 0.85rem;
+        }
+        
+        .table-responsive {
+            font-size: 0.75rem;
+        }
+        
+        .table th,
+        .table td {
+            padding: 4px 2px;
+            font-size: 0.7rem;
+        }
+        
+        .form-control-sm {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+        }
+        
+        .form-label {
+            font-size: 0.7rem;
+            margin-bottom: 1px;
+        }
+        
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+        }
+        
+        .input-group-sm > .form-control {
+            font-size: 0.75rem;
+            padding: 3px 6px;
+        }
+        
+        .input-group-sm > .btn {
+            font-size: 0.7rem;
+            padding: 3px 6px;
+        }
+        
+        /* Stack form fields vertically on very small screens */
+        .row.g-2 > .col-md-1,
+        .row.g-2 > .col-md-2,
+        .row.g-2 > .col-md-3 {
+            margin-bottom: 8px;
+        }
+    }
+    
+    /* Enhanced Modal Positioning and Visibility */
+    .modal {
+        overflow-y: auto !important;
+    }
+    
+    .modal-dialog {
+        margin: 1.75rem auto !important;
+        max-height: calc(100vh - 3.5rem) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .modal-dialog-centered {
+        min-height: calc(100vh - 3.5rem) !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .modal-content {
+        max-height: calc(100vh - 3.5rem) !important;
+        overflow-y: auto !important;
+        border-radius: 15px !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+    }
+    
+    .modal-body {
+        max-height: calc(100vh - 200px) !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+    }
+    
+    /* Ensure modal backdrop doesn't prevent scrolling */
+    .modal-backdrop {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        z-index: 1040 !important;
+    }
+    
+    /* Allow body scrolling when modal is open */
+    body.modal-open {
+        overflow: auto !important;
+        padding-right: 0 !important;
+    }
+    
+    /* Modal positioning for different screen sizes */
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 10px !important;
+            max-width: calc(100% - 20px) !important;
+            max-height: calc(100vh - 20px) !important;
+        }
+        
+        .modal-content {
+            border-radius: 10px !important;
+            max-height: calc(100vh - 20px) !important;
+        }
+        
+        .modal-header {
+            padding: 12px 15px !important;
+        }
+        
+        .modal-body {
+            padding: 15px !important;
+            max-height: calc(100vh - 120px) !important;
+        }
+        
+        .modal-title {
+            font-size: 1rem !important;
+        }
+    }
+    
+    /* Extra small screens */
+    @media (max-width: 576px) {
+        .modal-dialog {
+            margin: 5px !important;
+            max-width: calc(100% - 10px) !important;
+            max-height: calc(100vh - 10px) !important;
+        }
+        
+        .modal-content {
+            max-height: calc(100vh - 10px) !important;
+        }
+        
+        .modal-body {
+            max-height: calc(100vh - 100px) !important;
+            padding: 10px !important;
+        }
+    }
+    
+    /* Touch-friendly buttons for mobile */
+    @media (max-width: 768px) {
+        .btn {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .btn-sm {
+            min-height: 36px;
+            min-width: 36px;
+        }
+        
+        .btn-close-custom {
+            min-height: 44px;
+            min-width: 44px;
+        }
+    }
+    
+    /* Party Search Modal Specific Styles */
+    #partySearchModal .modal-dialog {
+        max-width: 90% !important;
+        width: 90% !important;
+        max-height: 90vh !important;
+        margin: 5vh auto !important;
+    }
+    
+    #partySearchModal .modal-content {
+        max-height: 90vh !important;
+        height: 90vh !important;
+    }
+    
+    #partySearchModal .modal-body {
+        max-height: calc(90vh - 120px) !important;
+        height: calc(90vh - 120px) !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+    }
+    
+    #partySearchModal .table-responsive {
+        max-height: calc(90vh - 200px) !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Item Search Modal Specific Styles */
+    #itemSearchModal .modal-dialog {
+        max-width: 90% !important;
+        width: 90% !important;
+        max-height: 90vh !important;
+        margin: 5vh auto !important;
+    }
+    
+    #itemSearchModal .modal-content {
+        max-height: 90vh !important;
+        height: 90vh !important;
+    }
+    
+    #itemSearchModal .modal-body {
+        max-height: calc(90vh - 120px) !important;
+        height: calc(90vh - 120px) !important;
+        overflow-y: auto !important;
+        padding: 20px !important;
+    }
+    
+    #itemSearchModal .table-responsive {
+        max-height: calc(90vh - 200px) !important;
+        overflow-y: auto !important;
+    }
+    
+    /* Mobile adjustments for search modals */
+    @media (max-width: 768px) {
+        #partySearchModal .modal-dialog,
+        #itemSearchModal .modal-dialog {
+            max-width: 95% !important;
+            width: 95% !important;
+            max-height: 95vh !important;
+            margin: 2.5vh auto !important;
+        }
+        
+        #partySearchModal .modal-content,
+        #itemSearchModal .modal-content {
+            max-height: 95vh !important;
+            height: 95vh !important;
+        }
+        
+        #partySearchModal .modal-body,
+        #itemSearchModal .modal-body {
+            max-height: calc(95vh - 100px) !important;
+            height: calc(95vh - 100px) !important;
+            padding: 15px !important;
+        }
+        
+        #partySearchModal .table-responsive,
+        #itemSearchModal .table-responsive {
+            max-height: calc(95vh - 180px) !important;
+        }
+    }
+    
+    /* Extra small screens */
+    @media (max-width: 576px) {
+        #partySearchModal .modal-dialog,
+        #itemSearchModal .modal-dialog {
+            max-width: 98% !important;
+            width: 98% !important;
+            max-height: 98vh !important;
+            margin: 1vh auto !important;
+        }
+        
+        #partySearchModal .modal-content,
+        #itemSearchModal .modal-content {
+            max-height: 98vh !important;
+            height: 98vh !important;
+        }
+        
+        #partySearchModal .modal-body,
+        #itemSearchModal .modal-body {
+            max-height: calc(98vh - 80px) !important;
+            height: calc(98vh - 80px) !important;
+            padding: 10px !important;
+        }
+        
+        #partySearchModal .table-responsive,
+        #itemSearchModal .table-responsive {
+            max-height: calc(98vh - 160px) !important;
+        }
+    }
+</style>
+{% endblock %} 

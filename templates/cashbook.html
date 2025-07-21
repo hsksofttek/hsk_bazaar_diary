@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+
+{% block title %}Cashbook - Business Management System{% endblock %}
+{% block page_title %}Cashbook Management{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-money-bill-wave me-2"></i>Cash Transactions
+        </h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCashbookModal">
+            <i class="fas fa-plus me-2"></i>Add Transaction
+        </button>
+    </div>
+    <div class="card-body">
+        {% if cashbook_entries %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Party</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Balance</th>
+                            <th>Narration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in cashbook_entries %}
+                        <tr>
+                            <td>{{ entry.transaction_date.strftime('%d/%m/%Y') if entry.transaction_date else 'N/A' }}</td>
+                            <td>{{ entry.party.party_nm if entry.party else entry.party_code }}</td>
+                            <td>
+                                <span class="badge {{ 'bg-success' if entry.transaction_type == 'Receipt' else 'bg-danger' }}">
+                                    {{ entry.transaction_type }}
+                                </span>
+                            </td>
+                            <td class="{{ 'text-success' if entry.transaction_type == 'Receipt' else 'text-danger' }}">
+                                ₹{{ "%.2f"|format(entry.amount) }}
+                            </td>
+                            <td>₹{{ "%.2f"|format(entry.balance) }}</td>
+                            <td>{{ entry.narration or 'N/A' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="editCashbookEntry({{ entry.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="deleteCashbookEntry({{ entry.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if cashbook_entries.pages > 1 %}
+            <nav aria-label="Cashbook pagination">
+                <ul class="pagination justify-content-center">
+                    {% if cashbook_entries.has_prev %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('cashbook', page=cashbook_entries.prev_num) }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for page_num in cashbook_entries.iter_pages() %}
+                        {% if page_num %}
+                            <li class="page-item {{ 'active' if page_num == cashbook_entries.page else '' }}">
+                                <a class="page-link" href="{{ url_for('cashbook', page=page_num) }}">
+                                    {{ page_num }}
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if cashbook_entries.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('cashbook', page=cashbook_entries.next_num) }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        {% else %}
+            <div class="text-center text-muted py-5">
+                <i class="fas fa-money-bill-wave fa-3x mb-3 opacity-25"></i>
+                <h5>No cash transactions found</h5>
+                <p>Start by adding your first cash transaction using the button above.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Cashbook Entry Modal -->
+<div class="modal fade" id="addCashbookModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>Add Cash Transaction
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addCashbookForm">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transaction Date *</label>
+                            <input type="date" class="form-control" name="transaction_date" id="transaction_date" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Transaction Type *</label>
+                            <select class="form-select" name="transaction_type" id="transaction_type" required>
+                                <option value="">Select Type</option>
+                                <option value="Receipt">Receipt</option>
+                                <option value="Payment">Payment</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Party</label>
+                            <select class="form-select" name="party_code" id="party_code">
+                                <option value="">Select Party (Optional)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Amount *</label>
+                            <input type="number" step="0.01" class="form-control" name="amount" id="amount" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label">Narration</label>
+                            <textarea class="form-control" name="narration" id="narration" rows="3" placeholder="Enter transaction description..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Transaction
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// SIMPLE SOLUTION - Remove modal backdrop and force bright styling
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to fix modal dimness
+    function fixCashbookModalDimness() {
+        // Remove any modal backdrop that might be causing the dim effect
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+            backdrop.style.display = 'none';
+            backdrop.remove();
+        });
+        
+        // Force bright styling on all form elements
+        const inputs = document.querySelectorAll('#addCashbookModal input, #addCashbookModal textarea, #addCashbookModal select');
+        inputs.forEach(input => {
+            input.style.cssText = `
+                background: white !important;
+                color: #333333 !important;
+                border: 2px solid #4a90e2 !important;
+                border-radius: 8px !important;
+                padding: 12px 16px !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                box-shadow: 0 2px 4px rgba(74,144,226,0.2) !important;
+                filter: brightness(1.5) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                display: block !important;
+                position: relative !important;
+                z-index: 99999 !important;
+            `;
+        });
+        
+        // Force bright styling on labels
+        const labels = document.querySelectorAll('#addCashbookModal label');
+        labels.forEach(label => {
+            label.style.cssText = `
+                color: #2c3e50 !important;
+                font-weight: 600 !important;
+                font-size: 14px !important;
+                margin-bottom: 8px !important;
+                display: block !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+            `;
+        });
+        
+        // Force bright styling on buttons
+        const buttons = document.querySelectorAll('#addCashbookModal button');
+        buttons.forEach(button => {
+            button.style.cssText = `
+                padding: 12px 24px !important;
+                font-weight: 600 !important;
+                border-radius: 8px !important;
+                border: none !important;
+                font-size: 14px !important;
+                box-shadow: 0 3px 6px rgba(0,0,0,0.2) !important;
+                filter: brightness(1.2) !important;
+                opacity: 1 !important;
+                visibility: visible !important;
+                cursor: pointer !important;
+            `;
+        });
+        
+        console.log('Cashbook modal dimness fixed!');
+    }
+    
+    // Apply fix when modal opens
+    const addCashbookModal = document.getElementById('addCashbookModal');
+    if (addCashbookModal) {
+        addCashbookModal.addEventListener('shown.bs.modal', function() {
+            setTimeout(fixCashbookModalDimness, 100);
+        });
+    }
+    
+    // Make function globally available
+    window.fixCashbookModalDimness = fixCashbookModalDimness;
+});
+
+// Load parties when modal opens
+document.getElementById('addCashbookModal').addEventListener('show.bs.modal', function() {
+    loadCashbookParties();
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('transaction_date').value = today;
+});
+
+// Load parties for dropdown
+function loadCashbookParties() {
+    fetch('/api/parties')
+        .then(response => response.json())
+        .then(data => {
+            const partySelect = document.getElementById('party_code');
+            partySelect.innerHTML = '<option value="">Select Party (Optional)</option>';
+            data.parties.forEach(party => {
+                partySelect.innerHTML += `<option value="${party.party_cd}">${party.party_cd} - ${party.party_nm}</option>`;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading parties:', error);
+        });
+}
+
+// Add Cashbook Form Submission
+document.getElementById('addCashbookForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    fetch('/api/cashbook', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Cash transaction saved successfully!');
+            location.reload();
+        } else {
+            alert('Error: ' + result.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the transaction.');
+    });
+});
+
+// Edit cashbook entry
+function editCashbookEntry(id) {
+    // Implementation for editing
+    alert('Edit functionality will be implemented!');
+}
+
+// Delete cashbook entry
+function deleteCashbookEntry(id) {
+    if (confirm('Are you sure you want to delete this transaction?')) {
+        fetch(`/api/cashbook/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Transaction deleted successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the transaction.');
+        });
+    }
+}
+</script>
+{% endblock %} 
