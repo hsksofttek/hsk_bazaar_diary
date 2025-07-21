@@ -7,3 +7,4 @@ pillow==11.3.0
 tkcalendar==1.6.1
 flask
 flask_sqlalchemy
+flask_login
