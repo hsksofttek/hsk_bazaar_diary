@@ -1,0 +1,748 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Parties Management - Business Management System{% endblock %}
+{% block page_title %}Modern Parties Management{% endblock %}
+
+{% block content %}
+<!-- Enhanced Header with Live Stats -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="fas fa-users me-2"></i>Parties Management
+                        </h4>
+                        <p class="mb-0">Manage your customers and suppliers efficiently</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="totalParties" 
+                                        hx-get="/api/parties/stats/total"
+                                        hx-trigger="every 30s"
+                                        hx-swap="innerHTML">{{ parties.total }}</h3>
+                                    <small>Total Parties</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="activeParties"
+                                        hx-get="/api/parties/stats/active"
+                                        hx-trigger="every 30s"
+                                        hx-swap="innerHTML">{{ parties.total }}</h3>
+                                    <small>Active</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="newParties"
+                                        hx-get="/api/parties/stats/new"
+                                        hx-trigger="every 30s"
+                                        hx-swap="innerHTML">0</h3>
+                                    <small>This Month</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Search and Actions -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <!-- Search Bar -->
+        <div class="input-group mb-4">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" 
+                   class="form-control form-control-lg" 
+                   id="searchInput"
+                   placeholder="Type to search parties (name, phone, place)...">
+            <button class="btn btn-outline-secondary" 
+                    onclick="toggleFilters()">
+                <i class="fas fa-filter"></i>
+            </button>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <div class="card mb-4" id="advancedFiltersCard" style="display: none;">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Advanced Filters
+                    <button class="btn btn-sm btn-outline-secondary float-end" 
+                            onclick="toggleFilters()">
+                        <i class="fas fa-chevron-down" id="filterChevron"></i>
+                    </button>
+                </h6>
+            </div>
+            <div class="card-body" id="filterBody" style="display: none;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Place</label>
+                        <select class="form-control" id="placeFilter">
+                            <option value="">All Places</option>
+                            <option value="Bangalore">Bangalore</option>
+                            <option value="Mumbai">Mumbai</option>
+                            <option value="Delhi">Delhi</option>
+                            <option value="Chennai">Chennai</option>
+                            <option value="Hyderabad">Hyderabad</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Balance Type</label>
+                        <select class="form-control" id="balanceTypeFilter">
+                            <option value="">All Types</option>
+                            <option value="D">Debit</option>
+                            <option value="C">Credit</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Balance Range</label>
+                        <select class="form-control" id="balanceRangeFilter">
+                            <option value="">All Balances</option>
+                            <option value="positive">Positive Balance</option>
+                            <option value="negative">Negative Balance</option>
+                            <option value="zero">Zero Balance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-control" id="sortByFilter">
+                            <option value="name">Name</option>
+                            <option value="code">Code</option>
+                            <option value="place">Place</option>
+                            <option value="balance">Balance</option>
+                            <option value="created">Created Date</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="clearFilters()">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                        <button class="btn btn-outline-success btn-sm ms-2" onclick="exportParties()">
+                            <i class="fas fa-download me-2"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 text-end">
+        <button class="btn btn-success btn-lg" 
+                        hx-get="/api/parties/add-form" 
+                        hx-target="#partyModal .modal-content" 
+                        hx-swap="innerHTML"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#partyModal">
+                    <i class="fas fa-plus me-2"></i>Add Party
+                </button>
+    </div>
+</div>
+
+<!-- Enhanced Parties Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-users me-2"></i>Parties
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-primary"
+                    hx-get="/api/parties/table"
+                    hx-target="#partiesTable"
+                    hx-swap="innerHTML">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="exportParties()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <!-- Results Summary -->
+        <div class="d-flex justify-content-between align-items-center p-3">
+            <div>
+                <span class="text-muted" id="resultsCount">Loading parties...</span>
+            </div>
+        </div>
+        <div id="partiesTable"
+             hx-get="/api/parties/table"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <!-- Table will be loaded here by HTMX -->
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Pagination -->
+{% if parties.pages > 1 %}
+<div class="row mt-3">
+    <div class="col-12">
+        <nav aria-label="Parties pagination">
+            <ul class="pagination justify-content-center">
+                {% if parties.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('parties', page=parties.prev_num, search=search) }}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in parties.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != parties.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('parties', page=page_num, search=search) }}">{{ page_num }}</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                        {% endif %}
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if parties.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('parties', page=parties.next_num, search=search) }}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Party Modal -->
+<div class="modal fade" id="partyModal" tabindex="-1" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Dynamic content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+<style>
+/* Enhanced styling for modern parties management */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item {
+    transition: background-color 0.2s ease;
+}
+
+/* Bright Modal Styling - Matching Old Form */
+.bright-modal {
+    background: white !important;
+    border: none !important;
+    border-radius: 15px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3) !important;
+}
+
+.bright-header {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%) !important;
+    color: white !important;
+    border-radius: 15px 15px 0 0 !important;
+    border-bottom: none !important;
+}
+
+.bright-header .modal-title {
+    font-weight: 600 !important;
+    font-size: 1.2rem !important;
+}
+
+.bright-header .btn-close {
+    filter: invert(1) !important;
+    opacity: 1 !important;
+}
+
+.bright-body {
+    background: white !important;
+    padding: 1.5rem !important;
+}
+
+.bright-label {
+    font-weight: 600 !important;
+    color: #333333 !important;
+    margin-bottom: 0.5rem !important;
+    font-size: 0.95rem !important;
+}
+
+.bright-input {
+    background: white !important;
+    color: #333333 !important;
+    border: 2px solid #4a90e2 !important;
+    border-radius: 8px !important;
+    padding: 0.75rem !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.bright-input:focus {
+    border-color: #357abd !important;
+    box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25) !important;
+    outline: none !important;
+}
+
+.bright-footer {
+    background: #f8f9fa !important;
+    border-top: 1px solid #dee2e6 !important;
+    border-radius: 0 0 15px 15px !important;
+    padding: 1rem 1.5rem !important;
+}
+
+/* Remove modal backdrop completely */
+.modal-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Modal positioning */
+.modal-dialog-centered {
+    display: flex !important;
+    align-items: center !important;
+    min-height: calc(100% - 1rem) !important;
+}
+
+/* Highlight selected party in table */
+.highlight-row {
+    background-color: #fff3cd !important;
+    border-left: 4px solid #ffc107 !important;
+    animation: highlight-pulse 2s ease-in-out;
+}
+
+@keyframes highlight-pulse {
+    0%, 100% { background-color: #fff3cd; }
+    50% { background-color: #ffeaa7; }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Smooth transitions */
+[x-transition] {
+    transition: all 0.3s ease;
+}
+
+/* HTMX loading indicators */
+.htmx-indicator {
+    opacity: 0;
+    transition: opacity 200ms ease-in;
+}
+.htmx-request .htmx-indicator {
+    opacity: 1
+}
+.htmx-request.htmx-indicator {
+    opacity: 1
+}
+</style>
+
+<script>
+// Initialize HTMX indicators
+document.body.addEventListener('htmx:beforeRequest', function(evt) {
+    console.log('HTMX request starting:', evt.detail.path);
+    evt.detail.target.classList.add('htmx-request');
+});
+
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    console.log('HTMX request completed:', evt.detail.path, 'Status:', evt.detail.xhr.status);
+    evt.detail.target.classList.remove('htmx-request');
+});
+
+document.body.addEventListener('htmx:responseError', function(evt) {
+    console.error('HTMX response error:', evt.detail.path, 'Status:', evt.detail.xhr.status);
+    console.error('Error details:', evt.detail.xhr.responseText);
+});
+
+// Party selection function
+function selectParty(party) {
+    console.log('Selected party:', party);
+    // You can implement party selection logic here
+    // For example, redirect to party details or fill a form
+}
+
+// Highlight party in table function
+function highlightPartyInTable(partyCode) {
+    console.log('Highlighting party:', partyCode);
+    
+    // Remove previous highlights
+    document.querySelectorAll('.table tbody tr').forEach(row => {
+        row.classList.remove('table-warning', 'highlight-row');
+    });
+    
+    // Add highlight to selected party
+    const targetRow = document.querySelector(`tr[data-party-code="${partyCode}"]`);
+    if (targetRow) {
+        targetRow.classList.add('table-warning', 'highlight-row');
+        targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+            targetRow.classList.remove('table-warning', 'highlight-row');
+        }, 3000);
+    }
+}
+
+// Delete party function
+function deleteParty(partyCode) {
+    console.log('Delete party function called for:', partyCode);
+    if (confirm('Are you sure you want to delete this party?')) {
+        fetch(`/api/parties/delete/${partyCode}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            console.log('Delete response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Delete response data:', data);
+            if (data.success) {
+                // Refresh the table
+                htmx.trigger('#partiesTable', 'every 60s');
+                alert('Party deleted successfully');
+            } else {
+                alert('Error deleting party: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Delete party error:', error);
+            alert('Error deleting party');
+        });
+    }
+}
+
+// Auto-refresh parties data
+setInterval(function() {
+    console.log('Auto-refreshing parties table...');
+    htmx.trigger('#partiesTable', 'every 60s');
+}, 60000);
+
+// Filter functions
+// Toggle filters visibility
+function toggleFilters() {
+    const filterBody = document.getElementById('filterBody');
+    const chevron = document.getElementById('filterChevron');
+    const advancedFiltersCard = document.getElementById('advancedFiltersCard');
+    
+    if (advancedFiltersCard.style.display === 'none') {
+        // Show the entire filters component
+        advancedFiltersCard.style.display = 'block';
+        filterBody.style.display = 'block';
+        chevron.className = 'fas fa-chevron-up';
+    } else {
+        // Hide the entire filters component
+        advancedFiltersCard.style.display = 'none';
+        filterBody.style.display = 'none';
+        chevron.className = 'fas fa-chevron-down';
+    }
+}
+
+function applyFilters() {
+    console.log('Applying filters...');
+    
+    // Get filter values
+    const place = document.getElementById('placeFilter').value;
+    const balanceType = document.getElementById('balanceTypeFilter').value;
+    const balanceRange = document.getElementById('balanceRangeFilter').value;
+    const sortBy = document.getElementById('sortByFilter').value;
+    
+    const filters = { place, balanceType, balanceRange, sortBy };
+    console.log('Filter values:', filters);
+    
+    // Build query parameters
+    const params = new URLSearchParams();
+    if (place) params.append('place', place);
+    if (balanceType) params.append('balanceType', balanceType);
+    if (balanceRange) params.append('balanceRange', balanceRange);
+    if (sortBy) params.append('sortBy', sortBy);
+    
+    // Fetch filtered data from server
+    fetch(`/api/parties/filtered?${params.toString()}`)
+        .then(response => response.json())
+        .then(data => {
+            console.log('Filtered data:', data);
+            updateTableWithData(data);
+        })
+        .catch(error => {
+            console.error('Filter error:', error);
+            alert('Error applying filters');
+        });
+}
+
+function clearFilters() {
+    console.log('Clearing filters...');
+    
+    // Reset all filter dropdowns
+    document.getElementById('placeFilter').value = '';
+    document.getElementById('balanceTypeFilter').value = '';
+    document.getElementById('balanceRangeFilter').value = '';
+    document.getElementById('sortByFilter').value = 'name';
+    
+    // Reload original table
+    refreshTable();
+}
+
+function exportParties() {
+    console.log('Exporting parties...');
+    
+    // Get current filter values
+    const place = document.getElementById('placeFilter').value;
+    const balanceType = document.getElementById('balanceTypeFilter').value;
+    const balanceRange = document.getElementById('balanceRangeFilter').value;
+    const sortBy = document.getElementById('sortByFilter').value;
+    
+    // Build export URL with filters
+    const params = new URLSearchParams();
+    if (place) params.append('place', place);
+    if (balanceType) params.append('balanceType', balanceType);
+    if (balanceRange) params.append('balanceRange', balanceRange);
+    if (sortBy) params.append('sortBy', sortBy);
+    
+    // Download the file
+    const exportUrl = `/api/parties/export?${params.toString()}`;
+    window.open(exportUrl, '_blank');
+    
+    console.log('Export initiated');
+}
+
+function updateTableWithData(parties) {
+    const tbody = document.querySelector('#partiesTable tbody');
+    if (!tbody) return;
+    
+    // Clear existing rows
+    tbody.innerHTML = '';
+    
+    // Add new rows
+    parties.forEach(party => {
+        const row = document.createElement('tr');
+        row.setAttribute('data-party-code', party.party_cd);
+        
+        const balance = party.ytd_dr - party.ytd_cr;
+        const balanceClass = balance > 0 ? 'danger' : 'success';
+        const statusClass = party.bal_cd === 'C' ? 'success' : 'warning';
+        
+                    row.innerHTML = `
+                <td>
+                    <span class="badge bg-primary">${party.party_cd}</span>
+                </td>
+                <td>
+                    <strong>${party.party_nm}</strong>
+                    ${party.party_nm_hindi ? `<br><small class="text-muted">${party.party_nm_hindi}</small>` : ''}
+                </td>
+                <td>
+                    ${party.phone ? `<div><i class="fas fa-phone me-1"></i>${party.phone}</div>` : ''}
+                    ${party.mobile ? `<div><i class="fas fa-mobile-alt me-1"></i>${party.mobile}</div>` : ''}
+                    ${party.email ? `<div><i class="fas fa-envelope me-1"></i>${party.email}</div>` : ''}
+                </td>
+                <td>
+                    <div>${party.place || 'N/A'}</div>
+                    ${party.address1 ? `<small class="text-muted">${party.address1}</small>` : ''}
+                </td>
+                <td>
+                    <span class="badge bg-${balanceClass}">₹${balance.toFixed(2)}</span>
+                </td>
+                <td>
+                    <span class="badge bg-${statusClass}">${party.bal_cd === 'C' ? 'Credit' : 'Debit'}</span>
+                </td>
+                <td>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary"
+                                hx-get="/api/parties/view/${party.party_cd}"
+                                hx-target="#partyModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#partyModal"
+                                title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning"
+                                hx-get="/api/parties/edit-form/${party.party_cd}"
+                                hx-target="#partyModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#partyModal"
+                                title="Edit Party">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger"
+                                hx-get="/api/parties/delete-confirm/${party.party_cd}"
+                                hx-target="#partyModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#partyModal"
+                                title="Delete Party">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            // Re-initialize HTMX for the new buttons
+            htmx.process(row);
+        
+        tbody.appendChild(row);
+    });
+    
+    // Update results count
+    updateResultsCount(parties.length);
+}
+
+function updateResultsCount(count) {
+    const resultsElement = document.getElementById('resultsCount');
+    if (resultsElement) {
+        resultsElement.textContent = `Showing ${count} parties`;
+    }
+}
+
+function refreshTable() {
+    console.log('Refreshing table...');
+    
+    // Use HTMX to reload the table content
+    htmx.ajax('GET', '/api/parties/table', { 
+        target: '#partiesTable', 
+        swap: 'innerHTML' 
+    });
+    
+    // Update results count after a delay
+    setTimeout(() => {
+        const rows = document.querySelectorAll('#partiesTable tbody tr');
+        updateResultsCount(rows.length);
+    }, 500);
+}
+
+// Debug function to test API endpoints
+function testAPIEndpoints() {
+    console.log('Testing API endpoints...');
+    
+    // Test search endpoint
+    fetch('/api/parties/search?q=test')
+        .then(r => r.json())
+        .then(data => console.log('Search test result:', data))
+        .catch(e => console.error('Search test error:', e));
+    
+    // Test add form endpoint
+    fetch('/api/parties/add-form')
+        .then(r => r.text())
+        .then(data => console.log('Add form test result length:', data.length))
+        .catch(e => console.error('Add form test error:', e));
+}
+
+// Search function
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value;
+    console.log('Searching for:', searchTerm);
+    
+    if (searchTerm.length > 2) {
+        fetch(`/api/parties/search?q=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('Search results:', data);
+                updateTableWithData(data);
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+            });
+    } else {
+        // If search term is too short, show all parties
+        refreshTable();
+    }
+}
+
+// Add event listener for search input
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        let searchTimeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(performSearch, 300);
+        });
+    }
+});
+
+// Call test function on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Parties enhanced page loaded');
+    
+    // Initialize Alpine.js store for filters
+    if (typeof Alpine !== 'undefined') {
+        Alpine.store('filters', {
+            place: '',
+            balanceType: '',
+            balanceRange: '',
+            sortBy: 'name'
+        });
+    }
+    
+    // Fix modal behavior - keep background scrollable
+    const partyModal = document.getElementById('partyModal');
+    if (partyModal) {
+        partyModal.addEventListener('show.bs.modal', function() {
+            // Remove any backdrop that might be created
+            setTimeout(() => {
+                const backdrops = document.querySelectorAll('.modal-backdrop');
+                backdrops.forEach(backdrop => {
+                    backdrop.style.display = 'none';
+                    backdrop.remove();
+                });
+            }, 100);
+        });
+        
+        partyModal.addEventListener('shown.bs.modal', function() {
+            // Ensure body remains scrollable
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+        });
+        
+        partyModal.addEventListener('hidden.bs.modal', function() {
+            // Clean up any remaining backdrops
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+        });
+    }
+    
+    // Uncomment the next line to test API endpoints on page load
+    // testAPIEndpoints();
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,930 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Dashboard - Business Management System{% endblock %}
+{% block page_title %}Modern Dashboard{% endblock %}
+
+{% block head %}
+<!-- HTMX for dynamic content loading -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<!-- Alpine.js for interactive components -->
+<script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+<!-- Chart.js for live charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+/* Enhanced Dashboard Styling */
+.dashboard-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    position: relative;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.dashboard-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+}
+
+.card-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.card-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.card-warning {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.dashboard-card .card-body {
+    padding: 2rem;
+    color: white;
+}
+
+.dashboard-card .card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+.dashboard-card .card-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-card .card-trend {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dashboard-card .card-icon {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    width: 60px;
+    height: 60px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-card .card-icon i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* Quick Actions Styling */
+.quick-action-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    min-height: 120px;
+}
+
+.quick-action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.quick-action-btn.btn-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.quick-action-btn.btn-info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.quick-action-btn.btn-warning {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+/* Section Cards */
+.section-card {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+}
+
+.section-card:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+.section-card .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
+.section-card .card-header h6 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+/* Activity Items */
+.activity-item {
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 0 10px 10px 0;
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover {
+    background: #e9ecef;
+    transform: translateX(5px);
+}
+
+.activity-item .activity-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+/* System Health */
+.health-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+}
+
+.health-item .health-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    margin-right: 1rem;
+}
+
+.health-item .health-icon.cpu { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.health-item .health-icon.memory { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+.health-item .health-icon.disk { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.health-item .health-icon.database { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+
+/* Notifications */
+.notification-item {
+    padding: 1rem;
+    border-left: 4px solid #667eea;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+    border-radius: 0 10px 10px 0;
+}
+
+.notification-item.alert-warning {
+    border-left-color: #ffc107;
+    background: #fff3cd;
+}
+
+.notification-item.alert-danger {
+    border-left-color: #dc3545;
+    background: #f8d7da;
+}
+
+.notification-item.alert-success {
+    border-left-color: #28a745;
+    background: #d4edda;
+}
+
+/* Chart Container */
+.chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .dashboard-card .card-value {
+        font-size: 2rem;
+    }
+    
+    .dashboard-card .card-icon {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .dashboard-card .card-icon i {
+        font-size: 1.2rem;
+    }
+}
+
+/* Loading Animation */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+}
+
+.page-header .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.refresh-btn {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.refresh-btn:hover {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    transform: scale(1.05);
+}
+
+/* Modal Styling */
+.modal {
+    z-index: 1055 !important;
+}
+
+.modal-backdrop {
+    display: none !important;
+}
+
+.modal-dialog {
+    max-width: 800px;
+    margin: 1.75rem auto;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    border: none;
+    padding: 1rem 1.5rem;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1rem 1.5rem;
+    background: #f8f9fa;
+    border-radius: 0 0 15px 15px;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Alert Styling */
+.alert {
+    border: none;
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+}
+
+/* Body scroll management */
+body.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Enhanced Page Header -->
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="fas fa-tachometer-alt me-3"></i>Dashboard Overview</h1>
+            <p class="mb-0 opacity-75">Welcome back! Here's what's happening with your business today.</p>
+        </div>
+        <div class="header-actions">
+            <button class="refresh-btn" onclick="location.reload()">
+                <i class="fas fa-sync-alt me-2"></i>Refresh
+            </button>
+            <span class="opacity-75">
+                Last updated: <span id="lastUpdate">Just now</span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Statistics Cards Row -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="dashboard-card card-primary">
+            <div class="card-body">
+                <div class="card-title">TOTAL PARTIES</div>
+                <div class="card-value" 
+                     id="totalParties"
+                     hx-get="/api/dashboard/stats/parties"
+                     hx-trigger="every 30s"
+                     hx-swap="innerHTML">
+                    {% if stats and stats.parties is not none %}
+                        {{ stats.parties }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12% from last month</span>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="dashboard-card card-success">
+            <div class="card-body">
+                <div class="card-title">TOTAL ITEMS</div>
+                <div class="card-value"
+                     id="totalItems"
+                     hx-get="/api/dashboard/stats/items"
+                     hx-trigger="every 30s"
+                     hx-swap="innerHTML">
+                    {% if stats %}
+                        {% if stats.items_count is defined %}
+                            {{ stats.items_count }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>8% from last month</span>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-box"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="dashboard-card card-info">
+            <div class="card-body">
+                <div class="card-title">THIS MONTH SALES</div>
+                <div class="card-value"
+                     id="monthlySales"
+                     hx-get="/api/dashboard/stats/sales"
+                     hx-trigger="every 30s"
+                     hx-swap="innerHTML">
+                    {% if stats and stats.monthly_sales is not none %}
+                        ₹{{ "%.2f"|format(stats.monthly_sales) }}
+                    {% else %}
+                        ₹0.00
+                    {% endif %}
+                </div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>15% from last month</span>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="dashboard-card card-warning">
+            <div class="card-body">
+                <div class="card-title">THIS MONTH PURCHASES</div>
+                <div class="card-value"
+                     id="monthlyPurchases"
+                     hx-get="/api/dashboard/stats/purchases"
+                     hx-trigger="every 30s"
+                     hx-swap="innerHTML">
+                    {% if stats and stats.monthly_purchases is not none %}
+                        ₹{{ "%.2f"|format(stats.monthly_purchases) }}
+                    {% else %}
+                        ₹0.00
+                    {% endif %}
+                </div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>3% from last month</span>
+                </div>
+                <div class="card-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row">
+    <!-- Enhanced Quick Actions Card -->
+    <div class="col-lg-4 mb-4">
+        <div class="section-card">
+            <div class="card-header">
+                <h6><i class="fas fa-bolt me-2"></i>Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <button class="btn btn-primary w-100 quick-action-btn"
+                                hx-get="/api/parties/add-form"
+                                hx-target="#quickActionModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#quickActionModal">
+                            <i class="fas fa-user-plus fa-2x mb-2"></i>
+                            <div class="fw-bold">ADD PARTY</div>
+                            <small class="opacity-75">NEW CUSTOMER/SUPPLIER</small>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-success w-100 quick-action-btn"
+                                hx-get="/api/items/add-form"
+                                hx-target="#quickActionModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#quickActionModal">
+                            <i class="fas fa-box fa-2x mb-2"></i>
+                            <div class="fw-bold">ADD ITEM</div>
+                            <small class="opacity-75">NEW PRODUCT</small>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-info w-100 quick-action-btn"
+                                onclick="openQuickActionModal('sale')">
+                            <i class="fas fa-receipt fa-2x mb-2"></i>
+                            <div class="fw-bold">NEW SALE</div>
+                            <small class="opacity-75">CREATE INVOICE</small>
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-warning w-100 quick-action-btn"
+                                hx-get="/api/purchases/add-form"
+                                hx-target="#quickActionModal .modal-content"
+                                hx-swap="innerHTML"
+                                data-bs-toggle="modal"
+                                data-bs-target="#quickActionModal">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                            <div class="fw-bold">NEW PURCHASE</div>
+                            <small class="opacity-75">RECORD PURCHASE</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Recent Activity Card -->
+    <div class="col-lg-8 mb-4">
+        <div class="section-card">
+            <div class="card-header">
+                <h6><i class="fas fa-history me-2"></i>Recent Activity</h6>
+                <button class="btn btn-sm btn-light"
+                        hx-get="/api/dashboard/activity"
+                        hx-target="#activityFeed"
+                        hx-swap="innerHTML">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="activityFeed"
+                     hx-get="/api/dashboard/activity"
+                     hx-trigger="load, every 60s"
+                     hx-swap="innerHTML">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row">
+    <!-- Sales vs Purchases Chart -->
+    <div class="col-xl-8 col-lg-7">
+        <div class="chart-container mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-area me-2"></i>Sales vs Purchases (Last 6 Months)
+                </h6>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="updateChartPeriod('6months')">Last 6 Months</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChartPeriod('12months')">Last 12 Months</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="updateChartPeriod('year')">This Year</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="chart-area" style="height: 300px;">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Parties by Balance -->
+    <div class="col-xl-4 col-lg-5">
+        <div class="section-card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-trophy me-2"></i>Top Parties by Balance</h6>
+                <button class="btn btn-sm btn-light"
+                        hx-get="/api/dashboard/top-parties"
+                        hx-target="#topParties"
+                        hx-swap="innerHTML">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="topParties"
+                     hx-get="/api/dashboard/top-parties"
+                     hx-trigger="load, every 60s"
+                     hx-swap="innerHTML">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading top parties...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Health and Notifications Row -->
+<div class="row">
+    <!-- System Health -->
+    <div class="col-lg-6">
+        <div class="section-card">
+            <div class="card-header">
+                <h6><i class="fas fa-heartbeat me-2"></i>System Health</h6>
+                <span class="badge bg-success">All Systems Operational</span>
+            </div>
+            <div class="card-body">
+                <div id="systemHealth"
+                     hx-get="/api/dashboard/system-health"
+                     hx-trigger="load, every 120s"
+                     hx-swap="innerHTML">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading system health...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Notifications -->
+    <div class="col-lg-6">
+        <div class="section-card">
+            <div class="card-header">
+                <h6><i class="fas fa-bell me-2"></i>Recent Notifications</h6>
+                <button class="btn btn-sm btn-light"
+                        hx-get="/api/dashboard/notifications"
+                        hx-target="#notifications"
+                        hx-swap="innerHTML">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="notifications"
+                     hx-get="/api/dashboard/notifications"
+                     hx-trigger="load, every 60s"
+                     hx-swap="innerHTML">
+                    <div class="text-center py-4">
+                        <div class="loading-spinner"></div>
+                        <p class="text-muted mt-2">Loading notifications...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Modal -->
+<div class="modal fade" id="quickActionModal" tabindex="-1" aria-labelledby="quickActionModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Modal content will be loaded here by HTMX -->
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize charts when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSalesChart();
+    updateLastUpdateTime();
+});
+
+function initializeSalesChart() {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    // Fetch chart data
+    fetch('/api/dashboard/chart-data')
+        .then(response => response.json())
+        .then(data => {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels || ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sales',
+                        data: data.sales || [0, 0, 0, 0, 0, 12862],
+                        borderColor: '#4facfe',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Purchases',
+                        data: data.purchases || [0, 0, 0, 0, 0, 10733],
+                        borderColor: '#fa709a',
+                        backgroundColor: 'rgba(250, 112, 154, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Error loading chart data:', error);
+            // Create a basic chart with sample data
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Sales',
+                        data: [0, 0, 0, 0, 0, 12862],
+                        borderColor: '#4facfe',
+                        backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Purchases',
+                        data: [0, 0, 0, 0, 0, 10733],
+                        borderColor: '#fa709a',
+                        backgroundColor: 'rgba(250, 112, 154, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '₹' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    document.getElementById('lastUpdate').textContent = timeString;
+}
+
+function updateChartPeriod(period) {
+    // This function can be expanded to update chart data based on period
+    console.log('Updating chart period to:', period);
+}
+
+// Quick Action Modal Functions
+function openQuickActionModal(action) {
+    console.log('Opening quick action modal for:', action);
+    const modal = new bootstrap.Modal(document.getElementById('quickActionModal'));
+    
+    let endpoint = '';
+    switch(action) {
+        case 'party':
+            endpoint = '/api/parties/add-form';
+            break;
+        case 'item':
+            endpoint = '/api/items/add-form';
+            break;
+        case 'sale':
+            endpoint = '/api/sales/add-form';
+            break;
+        case 'purchase':
+            endpoint = '/api/purchases/add-form';
+            break;
+        default:
+            console.error('Unknown action:', action);
+            return;
+    }
+    
+    fetch(endpoint)
+        .then(response => response.text())
+        .then(data => {
+            document.querySelector('#quickActionModal .modal-content').innerHTML = data;
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading form:', error);
+            alert('Error loading form. Please try again.');
+        });
+}
+
+// Auto-refresh last update time every minute
+setInterval(updateLastUpdateTime, 60000);
+
+// Modal handling
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle modal show/hide
+    const quickActionModal = document.getElementById('quickActionModal');
+    if (quickActionModal) {
+        quickActionModal.addEventListener('show.bs.modal', function () {
+            // Allow body scrolling
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+        });
+        
+        quickActionModal.addEventListener('hidden.bs.modal', function () {
+            // Restore body scrolling
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+        });
+    }
+    
+    // Handle HTMX after swap
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        if (evt.target.closest('#quickActionModal')) {
+            // Reinitialize any form elements if needed
+            const form = evt.target.querySelector('form');
+            if (form) {
+                // Add any form-specific initialization here
+                console.log('Form loaded in modal');
+            }
+        }
+    });
+});
+</script>
+{% endblock %} 
+ 
