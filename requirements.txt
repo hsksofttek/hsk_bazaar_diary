@@ -11,3 +11,4 @@ itsdangerous==2.1.2
 click==8.1.7
 blinker==1.6.3
 python-dotenv==1.0.0
+psutil
