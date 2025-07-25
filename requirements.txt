@@ -15,3 +15,4 @@ psutil
 flask_migrate
 flask_cors
 jwt
+email-validator
