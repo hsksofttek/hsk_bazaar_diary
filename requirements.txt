@@ -14,3 +14,4 @@ python-dotenv==1.0.0
 psutil
 flask_migrate
 flask_cors
+jwt
