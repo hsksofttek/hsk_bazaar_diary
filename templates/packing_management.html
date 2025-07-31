@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+
+{% block title %}Packing Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-boxes text-primary"></i> 📦 Packing Management
+            </h1>
+            <p class="text-muted">Manage packing materials, charges, and tracking</p>
+        </div>
+        <div>
+            <button class="btn btn-primary" onclick="openPackingEntryModal()">
+                <i class="fas fa-plus"></i> New Packing Entry
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Entries</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalEntries">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Quantity</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalQuantity">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-weight fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Total Value</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalValue">₹0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-rupee-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Items</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeItems">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-cube fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Recent Entries -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Packing Entries</h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <div class="dropdown-header">Actions:</div>
+                            <a class="dropdown-item" href="#" onclick="refreshData()">Refresh</a>
+                            <a class="dropdown-item" href="#" onclick="exportData()">Export</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="packingTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Bill No</th>
+                                    <th>Item Code</th>
+                                    <th>Description</th>
+                                    <th>Qty</th>
+                                    <th>Rate</th>
+                                    <th>Value</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="packingTableBody">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Items & Categories -->
+        <div class="col-lg-4">
+            <!-- Top Items -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Items by Quantity</h6>
+                </div>
+                <div class="card-body">
+                    <div id="topItemsList">
+                        <!-- Top items will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Categories -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top Categories</h6>
+                </div>
+                <div class="card-body">
+                    <div id="topCategoriesList">
+                        <!-- Top categories will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Packing Entry Modal -->
+<div class="modal fade" id="packingEntryModal" tabindex="-1" role="dialog" aria-labelledby="packingEntryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="packingEntryModalLabel">New Packing Entry</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="packingEntryForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="billNo">Bill Number *</label>
+                                <input type="number" class="form-control" id="billNo" name="bill_no" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="itemCode">Item Code *</label>
+                                <input type="text" class="form-control" id="itemCode" name="it_cd" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="packingDesc">Packing Description *</label>
+                                <input type="text" class="form-control" id="packingDesc" name="packing_desc" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="quantity">Quantity *</label>
+                                <input type="number" step="0.01" class="form-control" id="quantity" name="qty" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="mrp">MRP</label>
+                                <input type="number" step="0.01" class="form-control" id="mrp" name="mrp">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="salePrice">Sale Price</label>
+                                <input type="number" step="0.01" class="form-control" id="salePrice" name="sprc">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="package">Package</label>
+                                <input type="number" step="0.01" class="form-control" id="package" name="pkt">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="category">Category</label>
+                                <input type="text" class="form-control" id="category" name="cat_cd">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="itemWeight">Item Weight</label>
+                                <input type="number" step="0.01" class="form-control" id="itemWeight" name="itwt">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="maxRate">Max Rate</label>
+                                <input type="number" step="0.01" class="form-control" id="maxRate" name="maxrt">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="minRate">Min Rate</label>
+                                <input type="number" step="0.01" class="form-control" id="minRate" name="minrt">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="taxPercent">Tax %</label>
+                                <input type="number" step="0.01" class="form-control" id="taxPercent" name="taxpr">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="cess">CESS</label>
+                                <input type="number" step="0.01" class="form-control" id="cess" name="ccess">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="boundDetail1">Bound Detail 1</label>
+                                <input type="text" class="form-control" id="boundDetail1" name="bnd_dtl1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="boundDetail2">Bound Detail 2</label>
+                                <input type="text" class="form-control" id="boundDetail2" name="bnd_dtl2">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePackingEntry()">Save Entry</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charges Calculation Modal -->
+<div class="modal fade" id="chargesModal" tabindex="-1" role="dialog" aria-labelledby="chargesModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="chargesModalLabel">Packing Charges Calculation</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="chargesCalculation">
+                    <!-- Charges will be calculated and displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Global variables
+let currentPackingId = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Auto-calculate charges when values change
+    document.getElementById('quantity').addEventListener('input', calculateCharges);
+    document.getElementById('salePrice').addEventListener('input', calculateCharges);
+    document.getElementById('taxPercent').addEventListener('input', calculateCharges);
+    document.getElementById('cess').addEventListener('input', calculateCharges);
+}
+
+function loadDashboardData() {
+    fetch('/api/packing/dashboard-data')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateStatistics(data.data.statistics);
+                updateRecentEntries(data.data.recent_entries);
+                updateTopItems(data.data.top_items);
+                updateTopCategories(data.data.top_categories);
+            } else {
+                showAlert('Error loading dashboard data: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error loading dashboard data', 'danger');
+        });
+}
+
+function updateStatistics(stats) {
+    document.getElementById('totalEntries').textContent = stats.total_entries || 0;
+    document.getElementById('totalQuantity').textContent = (stats.total_qty || 0).toFixed(2);
+    document.getElementById('totalValue').textContent = '₹' + (stats.total_value || 0).toFixed(2);
+    document.getElementById('activeItems').textContent = stats.top_items ? stats.top_items.length : 0;
+}
+
+function updateRecentEntries(entries) {
+    const tbody = document.getElementById('packingTableBody');
+    tbody.innerHTML = '';
+    
+    if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No packing entries found</td></tr>';
+        return;
+    }
+    
+    entries.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.bill_no || ''}</td>
+            <td>${entry.it_cd || ''}</td>
+            <td>${entry.packing_desc || ''}</td>
+            <td>${(entry.qty || 0).toFixed(2)}</td>
+            <td>₹${(entry.sprc || 0).toFixed(2)}</td>
+            <td>₹${((entry.qty || 0) * (entry.sprc || 0)).toFixed(2)}</td>
+            <td>
+                <button class="btn btn-sm btn-info" onclick="viewPackingEntry(${entry.id})">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-warning" onclick="editPackingEntry(${entry.id})">
+                    <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-danger" onclick="deletePackingEntry(${entry.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateTopItems(items) {
+    const container = document.getElementById('topItemsList');
+    container.innerHTML = '';
+    
+    if (items.length === 0) {
+        container.innerHTML = '<p class="text-muted">No items found</p>';
+        return;
+    }
+    
+    items.forEach((item, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'd-flex justify-content-between align-items-center mb-2';
+        itemDiv.innerHTML = `
+            <div>
+                <strong>${item.it_cd}</strong>
+                <br><small class="text-muted">${(item.total_qty || 0).toFixed(2)} units</small>
+            </div>
+            <span class="badge badge-primary">${index + 1}</span>
+        `;
+        container.appendChild(itemDiv);
+    });
+}
+
+function updateTopCategories(categories) {
+    const container = document.getElementById('topCategoriesList');
+    container.innerHTML = '';
+    
+    if (categories.length === 0) {
+        container.innerHTML = '<p class="text-muted">No categories found</p>';
+        return;
+    }
+    
+    categories.forEach((category, index) => {
+        const catDiv = document.createElement('div');
+        catDiv.className = 'd-flex justify-content-between align-items-center mb-2';
+        catDiv.innerHTML = `
+            <div>
+                <strong>${category.cat_cd || 'Uncategorized'}</strong>
+                <br><small class="text-muted">${(category.total_qty || 0).toFixed(2)} units</small>
+            </div>
+            <span class="badge badge-success">${index + 1}</span>
+        `;
+        container.appendChild(catDiv);
+    });
+}
+
+function openPackingEntryModal() {
+    currentPackingId = null;
+    document.getElementById('packingEntryForm').reset();
+    document.getElementById('packingEntryModalLabel').textContent = 'New Packing Entry';
+    $('#packingEntryModal').modal('show');
+}
+
+function savePackingEntry() {
+    const form = document.getElementById('packingEntryForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert numeric fields
+    ['qty', 'mrp', 'sprc', 'pkt', 'maxrt', 'minrt', 'taxpr', 'hamrt', 'itwt', 'ccess'].forEach(field => {
+        if (data[field]) {
+            data[field] = parseFloat(data[field]);
+        }
+    });
+    
+    const url = currentPackingId ? `/api/packing/entry/${currentPackingId}` : '/api/packing/entry';
+    const method = currentPackingId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showAlert(result.message, 'success');
+            $('#packingEntryModal').modal('hide');
+            loadDashboardData();
+        } else {
+            showAlert('Error: ' + result.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error saving packing entry', 'danger');
+    });
+}
+
+function viewPackingEntry(id) {
+    fetch(`/api/packing/entry/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showPackingDetails(data.data);
+            } else {
+                showAlert('Error loading packing entry: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error loading packing entry', 'danger');
+        });
+}
+
+function editPackingEntry(id) {
+    fetch(`/api/packing/entry/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                currentPackingId = id;
+                populateForm(data.data);
+                document.getElementById('packingEntryModalLabel').textContent = 'Edit Packing Entry';
+                $('#packingEntryModal').modal('show');
+            } else {
+                showAlert('Error loading packing entry: ' + data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error loading packing entry', 'danger');
+        });
+}
+
+function deletePackingEntry(id) {
+    if (confirm('Are you sure you want to delete this packing entry?')) {
+        fetch(`/api/packing/entry/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                showAlert(result.message, 'success');
+                loadDashboardData();
+            } else {
+                showAlert('Error: ' + result.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error deleting packing entry', 'danger');
+        });
+    }
+}
+
+function populateForm(data) {
+    document.getElementById('billNo').value = data.bill_no || '';
+    document.getElementById('itemCode').value = data.it_cd || '';
+    document.getElementById('packingDesc').value = data.packing_desc || '';
+    document.getElementById('quantity').value = data.qty || '';
+    document.getElementById('mrp').value = data.mrp || '';
+    document.getElementById('salePrice').value = data.sprc || '';
+    document.getElementById('package').value = data.pkt || '';
+    document.getElementById('category').value = data.cat_cd || '';
+    document.getElementById('itemWeight').value = data.itwt || '';
+    document.getElementById('maxRate').value = data.maxrt || '';
+    document.getElementById('minRate').value = data.minrt || '';
+    document.getElementById('taxPercent').value = data.taxpr || '';
+    document.getElementById('cess').value = data.ccess || '';
+    document.getElementById('boundDetail1').value = data.bnd_dtl1 || '';
+    document.getElementById('boundDetail2').value = data.bnd_dtl2 || '';
+}
+
+function calculateCharges() {
+    const qty = parseFloat(document.getElementById('quantity').value) || 0;
+    const sprc = parseFloat(document.getElementById('salePrice').value) || 0;
+    const taxpr = parseFloat(document.getElementById('taxPercent').value) || 0;
+    const cess = parseFloat(document.getElementById('cess').value) || 0;
+    
+    const data = { qty, sprc, taxpr, ccess: cess };
+    
+    fetch('/api/packing/calculate-charges', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            showChargesCalculation(result.data);
+        }
+    })
+    .catch(error => {
+        console.error('Error calculating charges:', error);
+    });
+}
+
+function showChargesCalculation(charges) {
+    const container = document.getElementById('chargesCalculation');
+    container.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Basic Amount:</strong> ₹${charges.basic_amount}</p>
+                <p><strong>Tax Amount:</strong> ₹${charges.tax_amount}</p>
+                <p><strong>Hamali Amount:</strong> ₹${charges.hamali_amount}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>CESS Amount:</strong> ₹${charges.cess_amount}</p>
+                <p><strong>Total Amount:</strong> ₹${charges.total_amount}</p>
+            </div>
+        </div>
+    `;
+    $('#chargesModal').modal('show');
+}
+
+function showPackingDetails(data) {
+    const details = `
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Bill No:</strong> ${data.bill_no}</p>
+                <p><strong>Item Code:</strong> ${data.it_cd}</p>
+                <p><strong>Description:</strong> ${data.packing_desc}</p>
+                <p><strong>Quantity:</strong> ${data.qty}</p>
+                <p><strong>MRP:</strong> ₹${data.mrp}</p>
+                <p><strong>Sale Price:</strong> ₹${data.sprc}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Package:</strong> ${data.pkt}</p>
+                <p><strong>Category:</strong> ${data.cat_cd}</p>
+                <p><strong>Max Rate:</strong> ₹${data.maxrt}</p>
+                <p><strong>Min Rate:</strong> ₹${data.minrt}</p>
+                <p><strong>Tax %:</strong> ${data.taxpr}%</p>
+                <p><strong>CESS:</strong> ${data.ccess}%</p>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('chargesCalculation').innerHTML = details;
+    document.getElementById('chargesModalLabel').textContent = 'Packing Entry Details';
+    $('#chargesModal').modal('show');
+}
+
+function refreshData() {
+    loadDashboardData();
+    showAlert('Data refreshed successfully', 'success');
+}
+
+function exportData() {
+    window.open('/api/packing/export', '_blank');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    `;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+</script>
+{% endblock %} 

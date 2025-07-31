@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+
+{% block title %}Crate Management - Business Management System{% endblock %}
+{% block page_title %}🧺 Crate Management System{% endblock %}
+
+{% block extra_css %}
+<!-- DataTables CSS from jsDelivr CDN -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/datatables@1.10.18/media/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/datatables-bootstrap5@1.10.18/media/css/dataTables.bootstrap5.min.css">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Error Alert -->
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong>Error:</strong> {{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Parties
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_parties or 0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Crate Types
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_crate_types or 0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Outstanding Crates
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.total_outstanding_crates or 0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Parties with Outstanding
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ stats.parties_with_outstanding or 0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bolt me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-primary btn-block" onclick="openCrateTransactionModal()">
+                                <i class="fas fa-plus me-2"></i>+ NEW TRANSACTION
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-success btn-block" onclick="openCrateBalanceModal()">
+                                <i class="fas fa-search me-2"></i>CHECK BALANCE
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-warning btn-block" onclick="reconcileCrates()">
+                                <i class="fas fa-sync me-2"></i>RECONCILE
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-info btn-block" onclick="exportCrateData()">
+                                <i class="fas fa-download me-2"></i>EXPORT
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Crate Balances Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-table me-2"></i>Crate Balances
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="crateBalancesTable" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Party Code</th>
+                                    <th>Party Name</th>
+                                    <th>Crate Type</th>
+                                    <th>Issued</th>
+                                    <th>Returned</th>
+                                    <th>Balance</th>
+                                    <th>Outstanding</th>
+                                    <th>Total Outstanding</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- DEBUG: Show data count -->
+                                <tr>
+                                    <td colspan="9" class="text-center">
+                                        <strong>DEBUG: Total crate_balances: {{ crate_balances|length }}</strong>
+                                    </td>
+                                </tr>
+                                {% if crate_balances %}
+                                    {% for balance in crate_balances %}
+                                    <tr>
+                                        <td>{{ balance.party_code or '' }}</td>
+                                        <td>{{ balance.party_name or '' }}</td>
+                                        <td>{{ balance.crate_name or '' }}</td>
+                                        <td>{{ balance.issued_qty or 0 }}</td>
+                                        <td>{{ balance.returned_qty or 0 }}</td>
+                                        <td>{{ balance.balance_qty or 0 }}</td>
+                                        <td>{{ balance.outstanding_qty or 0 }}</td>
+                                        <td>{{ balance.total_outstanding or 0 }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-primary" onclick="createCrateTransaction('{{ balance.party_id or '' }}')">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-info" onclick="viewPartyBalance('{{ balance.party_id or '' }}')">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-warning" onclick="calculateRental('{{ balance.party_id or '' }}')">
+                                                <i class="fas fa-calculator"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted">
+                                            No data available in table
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Crate Transaction Modal -->
+<div class="modal fade" id="crateTransactionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Crate Transaction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="crateTransactionForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="party_id" class="form-label">Party</label>
+                                <select class="form-select" id="party_id" name="party_id" required>
+                                    <option value="">Select Party</option>
+                                    {% for party in parties %}
+                                    <option value="{{ party.party_cd }}">{{ party.party_nm }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="transaction_type" class="form-label">Transaction Type</label>
+                                <select class="form-select" id="transaction_type" name="transaction_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="ISSUE">Issue</option>
+                                    <option value="RETURN">Return</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="crate_type" class="form-label">Crate Type</label>
+                                <select class="form-select" id="crate_type" name="crate_type" required>
+                                    <option value="">Select Crate Type</option>
+                                    {% for crate_type in crate_types %}
+                                    <option value="{{ crate_type.crate_type_id }}">{{ crate_type.crate_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="quantity" class="form-label">Quantity</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bill_date" class="form-label">Transaction Date</label>
+                                <input type="date" class="form-control" id="bill_date" name="bill_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="bill_no" class="form-label">Bill Number</label>
+                                <input type="text" class="form-control" id="bill_no" name="bill_no">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="remarks" class="form-label">Remarks</label>
+                        <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCrateTransaction()">Save Transaction</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Crate Balance Modal -->
+<div class="modal fade" id="crateBalanceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Party Crate Balance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="crateBalanceModalBody">
+                <!-- Balance details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rental Calculator Modal -->
+<div class="modal fade" id="rentalCalculatorModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Rental Calculator</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rentalCalculatorForm">
+                    <input type="hidden" id="rental_party_id" name="rental_party_id">
+                    <div class="mb-3">
+                        <label for="rental_crate_type" class="form-label">Crate Type</label>
+                        <select class="form-select" id="rental_crate_type" name="rental_crate_type" required>
+                            <option value="">Select Crate Type</option>
+                            {% for crate_type in crate_types %}
+                            <option value="{{ crate_type.crate_type_id }}">{{ crate_type.crate_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="rental_quantity" class="form-label">Quantity</label>
+                        <input type="number" class="form-control" id="rental_quantity" name="rental_quantity" min="1" value="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="rental_days" class="form-label">Number of Days</label>
+                        <input type="number" class="form-control" id="rental_days" name="rental_days" min="1" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="calculateRentalCharges()">Calculate</button>
+                </form>
+                <div id="rentalResult" style="display: none;" class="mt-3">
+                    <hr>
+                    <h6>Rental Calculation Result:</h6>
+                    <div id="rentalResultContent"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables JS from jsDelivr CDN -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/datatables@1.10.18/media/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/datatables-bootstrap5@1.10.18/media/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+// Global variables
+let currentPartyId = null;
+
+// Initialize DataTable with error handling
+$(document).ready(function() {
+    try {
+        if (typeof $.fn.DataTable !== 'undefined') {
+            // Check if table exists and has data
+            var table = $('#crateBalancesTable');
+            if (table.length > 0) {
+                // Check if table has data rows (excluding debug row)
+                var dataRows = table.find('tbody tr').not(':first'); // Exclude debug row
+                
+                if (dataRows.length > 1) { // More than just the "No data" row
+                    // Destroy existing DataTable if it exists
+                    if ($.fn.DataTable.isDataTable('#crateBalancesTable')) {
+                        $('#crateBalancesTable').DataTable().destroy();
+                    }
+                    
+                    // Initialize DataTable with safer options
+                    $('#crateBalancesTable').DataTable({
+                        responsive: true,
+                        order: [[7, 'desc']], // Sort by total outstanding
+                        pageLength: 25,
+                        language: {
+                            emptyTable: "No data available in table"
+                        },
+                        columnDefs: [
+                            { targets: -1, orderable: false } // Make actions column not sortable
+                        ]
+                    });
+                } else {
+                    console.log('Table has no data rows, skipping DataTable initialization');
+                    // Add basic styling
+                    table.addClass('table-striped table-hover');
+                }
+            } else {
+                console.warn('Table #crateBalancesTable not found');
+            }
+        } else {
+            console.warn('DataTables library not loaded, using basic table');
+            // Fallback: add basic styling to make table look better
+            $('#crateBalancesTable').addClass('table-striped table-hover');
+        }
+    } catch (error) {
+        console.error('Error initializing DataTable:', error);
+        // Fallback: add basic styling to make table look better
+        $('#crateBalancesTable').addClass('table-striped table-hover');
+    }
+});
+
+// Open crate transaction modal
+function openCrateTransactionModal() {
+    $('#crateTransactionModal').modal('show');
+    $('#crateTransactionForm')[0].reset();
+    $('#bill_date').val(new Date().toISOString().split('T')[0]);
+}
+
+// Create crate transaction for specific party
+function createCrateTransaction(partyId) {
+    currentPartyId = partyId;
+    $('#party_id').val(partyId);
+    openCrateTransactionModal();
+}
+
+// Save crate transaction
+function saveCrateTransaction() {
+    const formData = new FormData($('#crateTransactionForm')[0]);
+    const data = Object.fromEntries(formData);
+    
+    // Validate required fields
+    if (!data.party_id || !data.transaction_type || !data.crate_type || !data.quantity) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    fetch('/api/crate/transaction', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Crate transaction created successfully!');
+            $('#crateTransactionModal').modal('hide');
+            location.reload(); // Refresh page to show updated data
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the transaction');
+    });
+}
+
+// Open crate balance modal
+function openCrateBalanceModal() {
+    $('#crateBalanceModal').modal('show');
+}
+
+// View party balance
+function viewPartyBalance(partyId) {
+    fetch(`/api/crate/balance/${partyId}`)
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            displayPartyBalance(result.balance);
+            $('#crateBalanceModal').modal('show');
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while fetching balance');
+    });
+}
+
+// Display party balance in modal
+function displayPartyBalance(balance) {
+    let html = `
+        <div class="row">
+            <div class="col-12">
+                <h6>Party: ${balance.party_name} (${balance.party_code})</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Crate Type</th>
+                                <th>Balance</th>
+                                <th>Outstanding</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    `;
+    
+    balance.crates.forEach(crate => {
+        html += `
+            <tr>
+                <td>${crate.crate_name}</td>
+                <td>${crate.balance_qty}</td>
+                <td>${crate.outstanding_qty}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    $('#crateBalanceModalBody').html(html);
+}
+
+// Reconcile crates
+function reconcileCrates() {
+    if (confirm('Are you sure you want to reconcile all crate balances?')) {
+        fetch('/api/crate/reconcile', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Crate reconciliation completed successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred during reconciliation');
+        });
+    }
+}
+
+// Export crate data
+function exportCrateData() {
+    fetch('/api/crate/export')
+    .then(response => response.blob())
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'crate_data.csv';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while exporting data');
+    });
+}
+
+// Convert data to CSV
+function convertToCSV(data) {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    
+    for (const row of data) {
+        const values = headers.map(header => {
+            const value = row[header];
+            return `"${value}"`;
+        });
+        csvRows.push(values.join(','));
+    }
+    
+    return csvRows.join('\n');
+}
+
+// Download CSV file
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// Open rental calculator modal
+function calculateRental(partyId) {
+    currentPartyId = partyId;
+    $('#rental_party_id').val(partyId);
+    $('#rentalCalculatorForm')[0].reset();
+    $('#rentalResult').hide();
+    $('#rentalCalculatorModal').modal('show');
+}
+
+// Calculate rental charges
+function calculateRentalCharges() {
+    const formData = new FormData($('#rentalCalculatorForm')[0]);
+    const data = Object.fromEntries(formData);
+    
+    if (!data.rental_crate_type || !data.rental_days) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    fetch('/api/crate/rental/calculate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            party_id: data.rental_party_id,
+            crate_type: data.rental_crate_type,
+            days: data.rental_days,
+            quantity: data.rental_quantity || null
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            displayRentalResult(result.rental_calculation);
+        } else {
+            alert('Error: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while calculating rental');
+    });
+}
+
+// Display rental calculation result
+function displayRentalResult(calculation) {
+    const html = `
+        <div class="row">
+            <div class="col-md-6">
+                <strong>Party:</strong> ${calculation.party_code}<br>
+                <strong>Crate Type:</strong> ${calculation.crate_name}<br>
+                <strong>Quantity:</strong> ${calculation.quantity}
+            </div>
+            <div class="col-md-6">
+                <strong>Days:</strong> ${calculation.days}<br>
+                <strong>Daily Rate:</strong> ₹${calculation.daily_rate}<br>
+                <strong>Total Charges:</strong> ₹${calculation.total_charges}
+            </div>
+        </div>
+    `;
+    
+    $('#rentalResultContent').html(html);
+    $('#rentalResult').show();
+}
+</script>
+{% endblock %} 

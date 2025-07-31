@@ -845,6 +845,95 @@
                     </a>
                 </div>
                 
+                <!-- New Management Systems -->
+                <div class="nav-item" style="margin: 1rem 1rem 0.5rem 1rem; padding: 0.5rem 0; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <small style="color: rgba(255,255,255,0.8); text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem; font-weight: 600;">🚀 NEW MANAGEMENT SYSTEMS</small>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('purchase_management') }}" class="nav-link {% if request.endpoint == 'purchase_management' %}active{% endif %}">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span>🛒 Purchase Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('sales_management') }}" class="nav-link {% if request.endpoint == 'sales_management' %}active{% endif %}">
+                        <i class="fas fa-cash-register"></i>
+                        <span>💰 Sales Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('inventory_management') }}" class="nav-link {% if request.endpoint == 'inventory_management' %}active{% endif %}">
+                        <i class="fas fa-boxes"></i>
+                        <span>📦 Inventory Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('financial_management') }}" class="nav-link {% if request.endpoint == 'financial_management' %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i>
+                        <span>📊 Financial Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('crate_management') }}" class="nav-link {% if request.endpoint == 'crate_management' %}active{% endif %}">
+                        <i class="fas fa-boxes"></i>
+                        <span>🧺 Crate Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('packing_management') }}" class="nav-link {% if request.endpoint == 'packing_management' %}active{% endif %}">
+                        <i class="fas fa-box"></i>
+                        <span>📦 Packing Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('transport_management') }}" class="nav-link {% if request.endpoint == 'transport_management' %}active{% endif %}">
+                        <i class="fas fa-truck"></i>
+                        <span>🚚 Transport Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('gate_pass_management') }}" class="nav-link {% if request.endpoint == 'gate_pass_management' %}active{% endif %}">
+                        <i class="fas fa-door-open"></i>
+                        <span>🚪 Gate Pass Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('agent_management') }}" class="nav-link {% if request.endpoint == 'agent_management' %}active{% endif %}">
+                        <i class="fas fa-user-tie"></i>
+                        <span>👤 Agent Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('bank_management') }}" class="nav-link {% if request.endpoint == 'bank_management' %}active{% endif %}">
+                        <i class="fas fa-university"></i>
+                        <span>🏦 Bank Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('schedule_management') }}" class="nav-link {% if request.endpoint == 'schedule_management' %}active{% endif %}">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span>📅 Schedule Management</span>
+                    </a>
+                </div>
+                
+                <div class="nav-item">
+                    <a href="{{ url_for('narration_management') }}" class="nav-link {% if request.endpoint == 'narration_management' %}active{% endif %}">
+                        <i class="fas fa-comment-alt"></i>
+                        <span>📝 Narration Management</span>
+                    </a>
+                </div>
+                
                 <div class="nav-item">
                     <a href="{{ url_for('cashbook') }}" class="nav-link {% if request.endpoint == 'cashbook' %}active{% endif %}">
                         <i class="fas fa-money-bill-wave"></i>

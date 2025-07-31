@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Inventory Management - Bazar Software</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --dark-bg: #34495e;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card.success {
+            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+        }
+        
+        .stats-card.warning {
+            background: linear-gradient(135deg, var(--warning-color), #f1c40f);
+        }
+        
+        .stats-card.danger {
+            background: linear-gradient(135deg, var(--danger-color), #c0392b);
+        }
+        
+        .stats-card.info {
+            background: linear-gradient(135deg, var(--secondary-color), #3498db);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .nav-tabs {
+            border: none;
+            background: white;
+            border-radius: 10px;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 8px;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .badge {
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-boxes me-2"></i>
+                Advanced Inventory Management
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard">
+                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stats-card success">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalItems">0</h4>
+                            <p class="mb-0">Total Items</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-boxes fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card info">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalValue">₹0</h4>
+                            <p class="mb-0">Total Value</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-rupee-sign fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card warning">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="lowStockItems">0</h4>
+                            <p class="mb-0">Low Stock Items</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card danger">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="todayMovements">0</h4>
+                            <p class="mb-0">Today's Movements</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exchange-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="inventoryTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="inventory-items-tab" data-bs-toggle="tab" data-bs-target="#inventory-items" type="button" role="tab">
+                                    <i class="fas fa-box me-2"></i>Inventory Items
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="add-item-tab" data-bs-toggle="tab" data-bs-target="#add-item" type="button" role="tab">
+                                    <i class="fas fa-plus-circle me-2"></i>Add Item
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="stock-movements-tab" data-bs-toggle="tab" data-bs-target="#stock-movements" type="button" role="tab">
+                                    <i class="fas fa-exchange-alt me-2"></i>Stock Movements
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="low-stock-tab" data-bs-toggle="tab" data-bs-target="#low-stock" type="button" role="tab">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Low Stock Alerts
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" data-bs-target="#reports" type="button" role="tab">
+                                    <i class="fas fa-chart-bar me-2"></i>Reports
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="inventoryTabsContent">
+                            <!-- Inventory Items Tab -->
+                            <div class="tab-pane fade show active" id="inventory-items" role="tabpanel">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="filterCategory">
+                                                <option value="">All Categories</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="filterStatus">
+                                                <option value="ACTIVE">Active Items</option>
+                                                <option value="INACTIVE">Inactive Items</option>
+                                                <option value="">All Items</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-primary" onclick="loadInventoryList()">
+                                                <i class="fas fa-search me-2"></i>Filter
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Item Code</th>
+                                                <th>Item Name</th>
+                                                <th>Category</th>
+                                                <th>Current Qty</th>
+                                                <th>Rate</th>
+                                                <th>Value</th>
+                                                <th>Min Stock</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="inventoryListBody">
+                                            <tr>
+                                                <td colspan="9" class="text-center">Loading inventory data...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span id="inventoryCount">0</span> items found
+                                    </div>
+                                    <nav>
+                                        <ul class="pagination" id="inventoryPagination">
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+
+                            <!-- Add Item Tab -->
+                            <div class="tab-pane fade" id="add-item" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <form id="addItemForm">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Item Code *</label>
+                                                        <input type="text" class="form-control" id="itemCode" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Item Name *</label>
+                                                        <input type="text" class="form-control" id="itemName" required>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Category</label>
+                                                        <input type="text" class="form-control" id="itemCategory">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Unit</label>
+                                                        <select class="form-select" id="itemUnit">
+                                                            <option value="PCS">Pieces</option>
+                                                            <option value="KG">Kilograms</option>
+                                                            <option value="LTR">Liters</option>
+                                                            <option value="MTR">Meters</option>
+                                                            <option value="BOX">Boxes</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Opening Quantity</label>
+                                                        <input type="number" class="form-control" id="openingQty" step="0.01" min="0" value="0">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Opening Rate</label>
+                                                        <input type="number" class="form-control" id="openingRate" step="0.01" min="0" value="0">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">HSN Code</label>
+                                                        <input type="text" class="form-control" id="hsnCode">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">GST Rate (%)</label>
+                                                        <input type="number" class="form-control" id="gstRate" step="0.01" min="0" value="18">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Minimum Stock</label>
+                                                        <input type="number" class="form-control" id="minStock" step="0.01" min="0" value="0">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Maximum Stock</label>
+                                                        <input type="number" class="form-control" id="maxStock" step="0.01" min="0" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Location</label>
+                                                        <input type="text" class="form-control" id="itemLocation">
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Rack Number</label>
+                                                        <input type="text" class="form-control" id="rackNo">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Remarks</label>
+                                                <textarea class="form-control" id="itemRemarks" rows="3"></textarea>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <button type="button" class="btn btn-secondary" onclick="calculateOpeningValue()">
+                                                    <i class="fas fa-calculator me-2"></i>Calculate Value
+                                                </button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-save me-2"></i>Add Item
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Calculations</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row mb-2">
+                                                    <div class="col-6">Opening Quantity:</div>
+                                                    <div class="col-6 text-end" id="calcQty">0.00</div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-6">Opening Rate:</div>
+                                                    <div class="col-6 text-end" id="calcRate">₹0.00</div>
+                                                </div>
+                                                <hr>
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Opening Value:</strong></div>
+                                                    <div class="col-6 text-end"><strong id="calcValue">₹0.00</strong></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Stock Movements Tab -->
+                            <div class="tab-pane fade" id="stock-movements" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                                    <h5>Stock Movement History</h5>
+                                    <p class="text-muted">Track all stock movements and transactions</p>
+                                    <div class="row g-3 justify-content-center">
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="movementStartDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="movementEndDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-primary" onclick="loadStockMovements()">
+                                                <i class="fas fa-search me-2"></i>Load Movements
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Low Stock Alerts Tab -->
+                            <div class="tab-pane fade" id="low-stock" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-exclamation-triangle fa-3x text-muted mb-3"></i>
+                                    <h5>Low Stock Alerts</h5>
+                                    <p class="text-muted">Monitor items that need reordering</p>
+                                    <button class="btn btn-warning" onclick="loadLowStockAlerts()">
+                                        <i class="fas fa-refresh me-2"></i>Refresh Alerts
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Reports Tab -->
+                            <div class="tab-pane fade" id="reports" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                                    <h5>Inventory Reports & Analytics</h5>
+                                    <p class="text-muted">Generate comprehensive inventory reports</p>
+                                    <div class="row g-3">
+                                        <div class="col-md-4">
+                                            <button class="btn btn-primary w-100" onclick="generateReport('summary')">
+                                                <i class="fas fa-chart-pie me-2"></i>Summary Report
+                                            </button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-success w-100" onclick="generateReport('movements')">
+                                                <i class="fas fa-exchange-alt me-2"></i>Movement Report
+                                            </button>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-warning w-100" onclick="generateReport('valuation')">
+                                                <i class="fas fa-calculator me-2"></i>Valuation Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Alerts -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <div id="alertContainer"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentPage = 1;
+        let totalPages = 1;
+        let inventoryData = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatistics();
+            loadInventoryList();
+            loadCategories();
+            setDefaultDates();
+        });
+
+        // Set default dates for filters
+        function setDefaultDates() {
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            
+            document.getElementById('movementStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('movementEndDate').value = today.toISOString().split('T')[0];
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/inventory/statistics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.statistics;
+                    document.getElementById('totalItems').textContent = stats.summary.total_items;
+                    document.getElementById('totalValue').textContent = '₹' + stats.summary.total_value.toLocaleString();
+                    document.getElementById('lowStockItems').textContent = stats.low_stock_alerts;
+                    document.getElementById('todayMovements').textContent = stats.today_movements;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                showAlert('Error loading statistics', 'danger');
+            }
+        }
+
+        // Load categories
+        async function loadCategories() {
+            try {
+                const response = await fetch('/api/inventory/categories');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const filterCategory = document.getElementById('filterCategory');
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category;
+                        option.textContent = category;
+                        filterCategory.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        // Calculate opening value
+        function calculateOpeningValue() {
+            const qty = parseFloat(document.getElementById('openingQty').value) || 0;
+            const rate = parseFloat(document.getElementById('openingRate').value) || 0;
+            const value = qty * rate;
+            
+            document.getElementById('calcQty').textContent = qty.toFixed(2);
+            document.getElementById('calcRate').textContent = '₹' + rate.toFixed(2);
+            document.getElementById('calcValue').textContent = '₹' + value.toFixed(2);
+        }
+
+        // Handle add item form submission
+        document.getElementById('addItemForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                it_cd: document.getElementById('itemCode').value,
+                it_nm: document.getElementById('itemName').value,
+                category: document.getElementById('itemCategory').value,
+                unit: document.getElementById('itemUnit').value,
+                opening_qty: parseFloat(document.getElementById('openingQty').value) || 0,
+                opening_rate: parseFloat(document.getElementById('openingRate').value) || 0,
+                hsn_code: document.getElementById('hsnCode').value,
+                gst_rate: parseFloat(document.getElementById('gstRate').value) || 0,
+                min_stock: parseFloat(document.getElementById('minStock').value) || 0,
+                max_stock: parseFloat(document.getElementById('maxStock').value) || 0,
+                location: document.getElementById('itemLocation').value,
+                rack_no: document.getElementById('rackNo').value
+            };
+
+            try {
+                const response = await fetch('/api/inventory/item', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Inventory item added successfully!', 'success');
+                    document.getElementById('addItemForm').reset();
+                    loadStatistics();
+                    loadInventoryList();
+                    loadCategories();
+                } else {
+                    showAlert(result.error || 'Error adding inventory item', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error adding inventory item', 'danger');
+            }
+        });
+
+        // Load inventory list
+        async function loadInventoryList() {
+            try {
+                const category = document.getElementById('filterCategory').value;
+                const status = document.getElementById('filterStatus').value;
+
+                const params = new URLSearchParams({
+                    limit: 20,
+                    offset: (currentPage - 1) * 20
+                });
+
+                if (category) params.append('category', category);
+                if (status) params.append('status', status);
+
+                const response = await fetch(`/api/inventory/list?${params}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    inventoryData = data.items;
+                    displayInventoryList();
+                    updatePagination(data.total_count, data.limit);
+                } else {
+                    showAlert('Error loading inventory list', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading inventory list:', error);
+                showAlert('Error loading inventory list', 'danger');
+            }
+        }
+
+        // Display inventory list
+        function displayInventoryList() {
+            const tbody = document.getElementById('inventoryListBody');
+            
+            if (inventoryData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="text-center">No inventory items found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = inventoryData.map(item => `
+                <tr>
+                    <td>${item.it_cd}</td>
+                    <td>${item.it_nm || '-'}</td>
+                    <td>${item.category || '-'}</td>
+                    <td>${item.current_qty.toFixed(2)}</td>
+                    <td>₹${item.current_rate.toFixed(2)}</td>
+                    <td>₹${item.current_value.toFixed(2)}</td>
+                    <td>${item.min_stock.toFixed(2)}</td>
+                    <td>
+                        <span class="badge bg-${item.status === 'ACTIVE' ? 'success' : 'secondary'}">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewItem('${item.it_cd}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editItem('${item.it_cd}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Update pagination
+        function updatePagination(totalCount, limit) {
+            totalPages = Math.ceil(totalCount / limit);
+            const pagination = document.getElementById('inventoryPagination');
+            
+            let paginationHTML = '';
+            
+            // Previous button
+            paginationHTML += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+                </li>
+            `;
+            
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    </li>
+                `;
+            }
+            
+            // Next button
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+                </li>
+            `;
+            
+            pagination.innerHTML = paginationHTML;
+            document.getElementById('inventoryCount').textContent = totalCount;
+        }
+
+        // Change page
+        function changePage(page) {
+            if (page >= 1 && page <= totalPages) {
+                currentPage = page;
+                loadInventoryList();
+            }
+        }
+
+        // Placeholder functions
+        function viewItem(itemCode) {
+            showAlert(`Viewing item ${itemCode}`, 'info');
+        }
+
+        function editItem(itemCode) {
+            showAlert(`Editing item ${itemCode}`, 'info');
+        }
+
+        function loadStockMovements() {
+            showAlert('Stock movements will be loaded', 'info');
+        }
+
+        function loadLowStockAlerts() {
+            showAlert('Low stock alerts will be loaded', 'info');
+        }
+
+        function generateReport(type) {
+            showAlert(`${type} report will be generated`, 'info');
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.innerHTML = alertHTML;
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

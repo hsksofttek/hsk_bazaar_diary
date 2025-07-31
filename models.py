@@ -98,6 +98,14 @@ class Party(db.Model):
     phone7 = db.Column(db.String(20))
     phone8 = db.Column(db.String(20))
     bst_no = db.Column(db.String(50))
+    
+    # Enhanced Credit Management (Based on Legacy Analysis)
+    credit_limit = db.Column(db.Float, default=0)  # Credit limit for the party
+    current_balance = db.Column(db.Float, default=0)  # Real-time balance
+    payment_terms = db.Column(db.String(50))  # Payment terms (e.g., "30 days")
+    last_payment_date = db.Column(db.Date)  # Last payment received date
+    credit_status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, SUSPENDED, BLOCKED
+    opening_balance_date = db.Column(db.Date)  # Date of opening balance
     bst_dt = db.Column(db.Date)
     vat_no = db.Column(db.String(50))
     acode = db.Column(db.String(20))
@@ -300,6 +308,13 @@ class Sale(db.Model):
     # Link to purchase (for tracking sold bags)
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchases.id'))
     
+    # Enhanced Payment Tracking (Based on Legacy Analysis)
+    payment_status = db.Column(db.String(20), default='PENDING')  # PENDING, PARTIAL, PAID
+    payment_due_date = db.Column(db.Date)  # Due date for payment
+    amount_paid = db.Column(db.Float, default=0)  # Amount paid so far
+    payment_terms = db.Column(db.String(50))  # Payment terms for this sale
+    credit_days = db.Column(db.Integer, default=0)  # Credit days allowed
+    
     # Relationships
     user = db.relationship('User', backref='sales')
     party = db.relationship('Party', backref='sales')
@@ -323,12 +338,24 @@ class Cashbook(db.Model):
     party_cd = db.Column(db.String(20), db.ForeignKey('parties.party_cd'))
     voucher_type = db.Column(db.String(20))
     voucher_no = db.Column(db.String(20))
+    
+    # Enhanced Payment Tracking (Based on Legacy Analysis)
+    related_sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'))  # Link to specific sale
+    payment_type = db.Column(db.String(20))  # CASH, CHEQUE, BANK_TRANSFER, etc.
+    reference_no = db.Column(db.String(50))  # Cheque number, transaction ID, etc.
+    payment_method = db.Column(db.String(50))  # Method of payment
+    bank_name = db.Column(db.String(100))  # Bank name for cheque payments
+    branch_name = db.Column(db.String(100))  # Branch name
+    cheque_date = db.Column(db.Date)  # Cheque date
+    transaction_date = db.Column(db.DateTime)  # Actual transaction date/time
+    
     created_date = db.Column(db.DateTime, default=datetime.utcnow)
     modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     # Relationships
     user = db.relationship('User', backref='cashbook_entries')
     party = db.relationship('Party', backref='cashbook_entries')
+    related_sale = db.relationship('Sale', backref='cashbook_entries')
     
     def __repr__(self):
         return f'<Cashbook {self.date}: {self.narration}>'
@@ -359,3 +386,275 @@ class Bankbook(db.Model):
     
     def __repr__(self):
         return f'<Bankbook {self.date}: {self.narration}>' 
+
+class Ledger(db.Model):
+    """Ledger for comprehensive financial tracking (Based on Legacy Analysis)"""
+    __tablename__ = 'ledger'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False)
+    party_cd = db.Column(db.String(20), db.ForeignKey('parties.party_cd'), nullable=False)
+    narration = db.Column(db.Text)
+    dr_amt = db.Column(db.Float, default=0)
+    cr_amt = db.Column(db.Float, default=0)
+    balance = db.Column(db.Float, default=0)
+    voucher_type = db.Column(db.String(20))  # SALE, PURCHASE, PAYMENT, RECEIPT, etc.
+    voucher_no = db.Column(db.String(20))
+    reference_no = db.Column(db.String(50))
+    
+    # Link to related transactions
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'))
+    purchase_id = db.Column(db.Integer, db.ForeignKey('purchases.id'))
+    cashbook_id = db.Column(db.Integer, db.ForeignKey('cashbook.id'))
+    bankbook_id = db.Column(db.Integer, db.ForeignKey('bankbook.id'))
+    
+    # Financial year tracking
+    financial_year = db.Column(db.String(10))  # e.g., "2024-25"
+    month = db.Column(db.Integer)  # 1-12
+    day = db.Column(db.Integer)  # 1-31
+    
+    # Balance indicators
+    balance_type = db.Column(db.String(1))  # D for Debit, C for Credit
+    running_balance = db.Column(db.Float, default=0)
+    
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='ledger_entries')
+    party = db.relationship('Party', backref='ledger_entries')
+    sale = db.relationship('Sale', backref='ledger_entries')
+    purchase = db.relationship('Purchase', backref='ledger_entries')
+    cashbook_entry = db.relationship('Cashbook', backref='ledger_entries')
+    bankbook_entry = db.relationship('Bankbook', backref='ledger_entries')
+    
+    def __repr__(self):
+        return f'<Ledger {self.id} - {self.party_cd} - {self.date}>' 
+
+class Packing(db.Model):
+    """Packing materials and charges"""
+    __tablename__ = 'packing'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    bill_no = db.Column(db.Integer)  # Bill number reference
+    it_cd = db.Column(db.String(20), db.ForeignKey('items.it_cd'))
+    packing_desc = db.Column(db.String(200))  # Packing description
+    qty = db.Column(db.Float, default=0)  # Quantity
+    mrp = db.Column(db.Float, default=0)  # Maximum Retail Price
+    sprc = db.Column(db.Float, default=0)  # Sale Price
+    pkt = db.Column(db.Float, default=0)  # Package rate
+    bnd_dtl1 = db.Column(db.String(100))  # Bound detail 1
+    bnd_dtl2 = db.Column(db.String(100))  # Bound detail 2
+    cat_cd = db.Column(db.String(20))  # Category code
+    maxrt = db.Column(db.Float, default=0)  # Maximum rate
+    minrt = db.Column(db.Float, default=0)  # Minimum rate
+    taxpr = db.Column(db.Float, default=0)  # Tax percentage
+    hamrt = db.Column(db.Float, default=0)  # Hamali rate
+    itwt = db.Column(db.Float, default=0)  # Item weight
+    ccess = db.Column(db.Integer, default=0)  # CESS amount
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='packing_entries')
+    item = db.relationship('Item', backref='packing_entries')
+    
+    def __repr__(self):
+        return f'<Packing {self.it_cd} - {self.packing_desc}>' 
+
+class TransportMaster(db.Model):
+    """Transport companies and logistics management"""
+    __tablename__ = 'transport_master'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    trans_cd = db.Column(db.String(20), unique=True, nullable=False)
+    trans_nm = db.Column(db.String(200), nullable=False)
+    address = db.Column(db.Text)
+    phone = db.Column(db.String(20))
+    mobile = db.Column(db.String(20))
+    email = db.Column(db.String(100))
+    dest = db.Column(db.String(100))  # Destination
+    city = db.Column(db.String(100))
+    state = db.Column(db.String(100))
+    vehicle_no = db.Column(db.String(20))
+    driver_name = db.Column(db.String(100))
+    license_no = db.Column(db.String(50))
+    gst_no = db.Column(db.String(20))
+    pan_no = db.Column(db.String(20))
+    commission = db.Column(db.Float, default=0)  # Commission percentage
+    status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, INACTIVE, SUSPENDED
+    remarks = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='transport_companies')
+    
+    def __repr__(self):
+        return f'<TransportMaster {self.trans_cd} - {self.trans_nm}>' 
+
+class GatePass(db.Model):
+    """Gate pass for vehicle entry and exit tracking"""
+    __tablename__ = 'gate_pass'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    gate_pass_no = db.Column(db.Integer, unique=True, nullable=False)
+    gate_pass_date = db.Column(db.Date, nullable=False)
+    party_cd = db.Column(db.String(20), db.ForeignKey('parties.party_cd'), nullable=False)
+    vehicle_no = db.Column(db.String(20))
+    driver_name = db.Column(db.String(100))
+    license_no = db.Column(db.String(50))
+    purpose = db.Column(db.String(200))
+    items_description = db.Column(db.Text)
+    quantity = db.Column(db.Float, default=0)
+    weight = db.Column(db.Float, default=0)
+    entry_time = db.Column(db.DateTime)
+    exit_time = db.Column(db.DateTime)
+    status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, INSIDE, COMPLETED
+    authorized_by = db.Column(db.String(100))
+    remarks = db.Column(db.Text)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='gate_passes')
+    party = db.relationship('Party', backref='gate_passes')
+    
+    def __repr__(self):
+        return f'<GatePass {self.gate_pass_no} - {self.party_cd}>'
+
+class Agent(db.Model):
+    """Sales agents and commission management"""
+    __tablename__ = 'agents'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    agent_cd = db.Column(db.String(20), unique=True, nullable=False)
+    agent_nm = db.Column(db.String(200), nullable=False)
+    commission_rate = db.Column(db.Float, default=0)  # Commission percentage
+    phone = db.Column(db.String(20))
+    address = db.Column(db.Text)
+    email = db.Column(db.String(100))
+    mobile = db.Column(db.String(20))
+    gst_no = db.Column(db.String(20))
+    pan_no = db.Column(db.String(20))
+    bank_name = db.Column(db.String(100))
+    account_no = db.Column(db.String(50))
+    ifsc_code = db.Column(db.String(20))
+    status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, INACTIVE, SUSPENDED
+    joining_date = db.Column(db.Date)
+    remarks = db.Column(db.Text)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='agents')
+    
+    def __repr__(self):
+        return f'<Agent {self.agent_cd} - {self.agent_nm}>'
+
+class BankAccount(db.Model):
+    """Bank accounts management"""
+    __tablename__ = 'bank_accounts'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    account_name = db.Column(db.String(200), nullable=False)
+    bank_name = db.Column(db.String(200), nullable=False)
+    account_number = db.Column(db.String(50), unique=True, nullable=False)
+    ifsc_code = db.Column(db.String(20))
+    branch_name = db.Column(db.String(200))
+    account_type = db.Column(db.String(20), default='SAVINGS')  # SAVINGS, CURRENT, FIXED
+    opening_balance = db.Column(db.Float, default=0)
+    current_balance = db.Column(db.Float, default=0)
+    status = db.Column(db.String(20), default='ACTIVE')  # ACTIVE, INACTIVE, CLOSED
+    remarks = db.Column(db.Text)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='bank_accounts')
+    transactions = db.relationship('BankTransaction', backref='account')
+    
+    def __repr__(self):
+        return f'<BankAccount {self.account_name} - {self.bank_name}>'
+
+class BankTransaction(db.Model):
+    """Bank transactions"""
+    __tablename__ = 'bank_transactions'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    account_id = db.Column(db.Integer, db.ForeignKey('bank_accounts.id'), nullable=False)
+    transaction_date = db.Column(db.Date, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    transaction_type = db.Column(db.String(20), nullable=False)  # CREDIT, DEBIT
+    narration = db.Column(db.Text)
+    reference_no = db.Column(db.String(50))
+    cheque_no = db.Column(db.String(20))
+    party_cd = db.Column(db.String(20), db.ForeignKey('parties.party_cd'))
+    category = db.Column(db.String(100))
+    status = db.Column(db.String(20), default='COMPLETED')  # COMPLETED, PENDING, CANCELLED
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='bank_transactions')
+    party = db.relationship('Party', backref='bank_transactions')
+    
+    def __repr__(self):
+        return f'<BankTransaction {self.id} - {self.transaction_type} - {self.amount}>'
+
+class Schedule(db.Model):
+    """Payment and delivery schedules"""
+    __tablename__ = 'schedules'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    schedule_type = db.Column(db.String(20), nullable=False)  # PAYMENT, DELIVERY, REMINDER
+    due_date = db.Column(db.Date, nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    party_cd = db.Column(db.String(20), db.ForeignKey('parties.party_cd'), nullable=False)
+    description = db.Column(db.Text)
+    reference_no = db.Column(db.String(50))
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'))
+    purchase_id = db.Column(db.Integer, db.ForeignKey('purchases.id'))
+    status = db.Column(db.String(20), default='PENDING')  # PENDING, COMPLETED, OVERDUE, CANCELLED
+    priority = db.Column(db.String(20), default='MEDIUM')  # LOW, MEDIUM, HIGH, URGENT
+    reminder_days = db.Column(db.Integer, default=7)
+    remarks = db.Column(db.Text)
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_date = db.Column(db.DateTime)
+    
+    # Relationships
+    user = db.relationship('User', backref='schedules')
+    party = db.relationship('Party', backref='schedules')
+    sale = db.relationship('Sale', backref='schedules')
+    purchase = db.relationship('Purchase', backref='schedules')
+    
+    def __repr__(self):
+        return f'<Schedule {self.id} - {self.schedule_type} - {self.due_date}>'
+
+class Narration(db.Model):
+    """Predefined narration templates"""
+    __tablename__ = 'narrations'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    narration_text = db.Column(db.Text, nullable=False)
+    category = db.Column(db.String(50), nullable=False)  # e.g., Sales, Purchase, Payment, General
+    description = db.Column(db.Text)
+    is_active = db.Column(db.Boolean, default=True)
+    usage_count = db.Column(db.Integer, default=0)
+    created_by = db.Column(db.String(100), default='system')
+    created_date = db.Column(db.DateTime, default=datetime.utcnow)
+    modified_date = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    user = db.relationship('User', backref='narrations')
+    
+    def __repr__(self):
+        return f'<Narration {self.id} - {self.category} - {self.narration_text[:30]}...>' 

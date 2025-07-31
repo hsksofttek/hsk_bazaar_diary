@@ -871,7 +871,7 @@ def items_stats_lowstock():
         return str(count)
     except Exception as e:
         print(f"Error getting low stock items: {e}")
-        return "0"
+        return "0" 
 
 @items_api.route('/api/items/list')
 @login_required

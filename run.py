@@ -11,7 +11,8 @@ from pathlib import Path
 current_dir = Path(__file__).parent
 sys.path.insert(0, str(current_dir))
 
-from app import create_app, init_db
+from app import create_app
+from database import db
 
 def main():
     """Main startup function"""
@@ -24,7 +25,7 @@ def main():
     # Initialize database
     with app.app_context():
         print("📊 Initializing database...")
-        init_db()
+        db.create_all()
         print("✅ Database initialized successfully!")
     
     print("\n🌐 Starting web server...")

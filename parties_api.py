@@ -1118,7 +1118,7 @@ def purchases_add():
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
-        """, error=str(e))
+        """, error=str(e)) 
 
 @parties_api.route('/api/parties/list')
 @login_required

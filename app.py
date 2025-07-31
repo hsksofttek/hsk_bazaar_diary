@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 import jwt
 from functools import wraps
 import logging
+import random
 
 # Import models and routes
 from database import db
@@ -30,7 +31,22 @@ from parties_api import parties_api
 from items_api import items_api
 from sales_api import sales_api
 from purchases_api import purchases_api
+from enhanced_api import enhanced_api
 from forms import LoginForm, RegistrationForm
+
+# Import new management systems
+from purchase_management import PurchaseManagementSystem
+from sales_management import SalesManagementSystem
+from inventory_management import InventoryManagementSystem
+from financial_management import FinancialManagementSystem
+from crate_management import CrateManagementSystem
+from packing_management import PackingManagementSystem
+from transport_management import TransportManagementSystem
+from gate_pass_management import GatePassManagementSystem
+from agent_management import AgentManagementSystem
+from bank_management import BankManagementSystem
+from schedule_management import ScheduleManagementSystem
+from narration_management import NarrationManagementSystem
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -78,6 +94,34 @@ def create_app():
     app.register_blueprint(items_api, url_prefix='')
     app.register_blueprint(sales_api, url_prefix='')
     app.register_blueprint(purchases_api, url_prefix='')
+    app.register_blueprint(enhanced_api, url_prefix='/api/enhanced')
+    
+    # Register new management system API blueprints
+    from purchase_management_api import purchase_management_api
+    from sales_management_api import sales_management_api
+    from inventory_management_api import inventory_management_api
+    from financial_management_api import financial_management_api
+    from crate_management_api import crate_management_bp
+    from packing_management_api import packing_management_bp
+    from transport_management_api import transport_management_bp
+    from gate_pass_management_api import gate_pass_management_bp
+    from agent_management_api import agent_management_bp
+    from bank_management_api import bank_management_bp
+    from schedule_management_api import schedule_management_bp
+    from narration_management_api import narration_management_bp
+    
+    app.register_blueprint(purchase_management_api, url_prefix='')
+    app.register_blueprint(sales_management_api, url_prefix='')
+    app.register_blueprint(inventory_management_api, url_prefix='')
+    app.register_blueprint(packing_management_bp, url_prefix='')
+    app.register_blueprint(financial_management_api, url_prefix='')
+    app.register_blueprint(crate_management_bp, url_prefix='')
+    app.register_blueprint(transport_management_bp, url_prefix='')
+    app.register_blueprint(gate_pass_management_bp, url_prefix='')
+    app.register_blueprint(agent_management_bp, url_prefix='')
+    app.register_blueprint(bank_management_bp, url_prefix='')
+    app.register_blueprint(schedule_management_bp, url_prefix='')
+    app.register_blueprint(narration_management_bp, url_prefix='')
     
     # Main routes
     @app.route('/')
@@ -97,96 +141,69 @@ def create_app():
             total_purchases = Purchase.query.filter_by(user_id=current_user.id).count()
             total_sales = Sale.query.filter_by(user_id=current_user.id).count()
             
-            # Get recent transactions for this user
-            recent_purchases = Purchase.query.filter_by(user_id=current_user.id)\
-                .order_by(Purchase.created_date.desc()).limit(5).all()
-            recent_sales = Sale.query.filter_by(user_id=current_user.id)\
-                .order_by(Sale.created_date.desc()).limit(5).all()
+            # Get recent purchases and sales
+            recent_purchases = Purchase.query.filter_by(user_id=current_user.id).order_by(Purchase.bill_date.desc()).limit(5).all()
+            recent_sales = Sale.query.filter_by(user_id=current_user.id).order_by(Sale.bill_date.desc()).limit(5).all()
             
-            # Get user's company info
-            company = Company.query.filter_by(user_id=current_user.id).first()
+            stats = {
+                'parties': total_parties,
+                'items_count': total_items,
+                'purchases': total_purchases,
+                'sales': total_sales
+            }
             
-            return render_template('dashboard.html',
-                                 user=current_user,
-                                 company=company,
-                                 total_parties=total_parties,
-                                 total_items=total_items,
-                                 total_purchases=total_purchases,
-                                 total_sales=total_sales,
-                                 recent_purchases=recent_purchases,
-                                 recent_sales=recent_sales)
+            return render_template('dashboard.html', 
+                                stats=stats,
+                                recent_purchases=recent_purchases,
+                                recent_sales=recent_sales)
         except Exception as e:
             logger.error(f"Dashboard error: {e}")
             flash('Error loading dashboard data', 'error')
-            return render_template('dashboard.html')
+            return render_template('dashboard.html', stats={}, recent_purchases=[], recent_sales=[])
     
     @app.route('/dashboard-enhanced')
     @login_required
     def dashboard_enhanced():
         """Enhanced dashboard with modern features"""
         try:
-            print("DEBUG: Entering dashboard_enhanced function")
-            
-            # Get user-specific statistics with proper type conversion
-            parties_count = Party.query.filter_by(user_id=current_user.id).count()
-            items_count = Item.query.filter_by(user_id=current_user.id).count()
-            
-            print(f"DEBUG: Raw counts - parties: {parties_count} (type: {type(parties_count)}), items: {items_count} (type: {type(items_count)})")
-            
-            # Ensure proper type conversion and handle None values
-            stats = {
-                'parties': int(parties_count) if parties_count is not None else 0,
-                'items_count': int(items_count) if items_count is not None else 0,
-                'monthly_sales': 0.0,
-                'monthly_purchases': 0.0
-            }
-            
-            print(f"DEBUG: Processed stats: {stats}")
+            # Get user-specific statistics
+            total_parties = Party.query.filter_by(user_id=current_user.id).count()
+            total_items = Item.query.filter_by(user_id=current_user.id).count()
             
             # Calculate monthly totals
-            start_of_month = datetime.now().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            from sqlalchemy import func
+            current_month = datetime.now().month
+            current_year = datetime.now().year
             
-            monthly_sales = db.session.query(func.sum(Sale.sal_amt)).filter(
+            monthly_sales = db.session.query(db.func.sum(Sale.sal_amt)).filter(
                 Sale.user_id == current_user.id,
-                Sale.bill_date >= start_of_month
-            ).scalar()
-            stats['monthly_sales'] = float(monthly_sales) if monthly_sales is not None else 0.0
+                db.func.extract('month', Sale.bill_date) == current_month,
+                db.func.extract('year', Sale.bill_date) == current_year
+            ).scalar() or 0
             
-            monthly_purchases = db.session.query(func.sum(Purchase.sal_amt)).filter(
+            monthly_purchases = db.session.query(db.func.sum(Purchase.sal_amt)).filter(
                 Purchase.user_id == current_user.id,
-                Purchase.bill_date >= start_of_month
-            ).scalar()
-            stats['monthly_purchases'] = float(monthly_purchases) if monthly_purchases is not None else 0.0
+                db.func.extract('month', Purchase.bill_date) == current_month,
+                db.func.extract('year', Purchase.bill_date) == current_year
+            ).scalar() or 0
             
-            print(f"DEBUG: Monthly totals calculated: sales={stats['monthly_sales']}, purchases={stats['monthly_purchases']}")
+            stats = {
+                'parties': total_parties,
+                'items_count': total_items,
+                'monthly_sales': monthly_sales,
+                'monthly_purchases': monthly_purchases
+            }
             
-            # Get user's company info
-            company = Company.query.filter_by(user_id=current_user.id).first()
-            
-            print("DEBUG: About to render dashboard_enhanced.html")
-            
-            return render_template('dashboard_enhanced.html', 
-                                 stats=stats,
-                                 company=company,
-                                 user=current_user)
+            return render_template('dashboard_enhanced.html', stats=stats)
         except Exception as e:
-            print(f"DEBUG: Error in dashboard_enhanced: {e}")
-            logger.error(f"Dashboard enhanced error: {e}")
-            # Return with safe default values instead of redirecting
-            return render_template('dashboard_enhanced.html', 
-                                 stats={'parties': 0, 'items_count': 0, 'monthly_sales': 0.0, 'monthly_purchases': 0.0},
-                                 company=None,
-                                 user=current_user)
+            logger.error(f"Enhanced dashboard error: {e}")
+            flash('Error loading enhanced dashboard data', 'error')
+            return render_template('dashboard_enhanced.html', stats={})
     
     @app.route('/test-enhanced')
     @login_required
     def test_enhanced():
-        """Test route for enhanced dashboard"""
-        return render_template('dashboard_enhanced.html', 
-                             stats={'parties': 3, 'items_count': 5, 'monthly_sales': 1000, 'monthly_purchases': 800},
-                             company=None,
-                             user=current_user)
+        """Test route for enhanced features"""
+        return render_template('dashboard_enhanced.html', stats={})
     
     @app.route('/parties')
     @login_required
@@ -257,10 +274,9 @@ def create_app():
     @app.route('/purchases')
     @login_required
     def purchases():
-        """Purchases management page (user-specific)"""
+        """Purchases management page"""
         page = request.args.get('page', 1, type=int)
-        purchases = Purchase.query.filter_by(user_id=current_user.id)\
-            .order_by(Purchase.bill_date.desc()).paginate(
+        purchases = Purchase.query.filter_by(user_id=current_user.id).order_by(Purchase.bill_date.desc()).paginate(
             page=page, per_page=20, error_out=False)
         return render_template('purchases.html', purchases=purchases)
     
@@ -274,10 +290,9 @@ def create_app():
     @app.route('/sales')
     @login_required
     def sales():
-        """Sales management page (user-specific)"""
+        """Sales management page"""
         page = request.args.get('page', 1, type=int)
-        sales = Sale.query.filter_by(user_id=current_user.id)\
-            .order_by(Sale.bill_date.desc()).paginate(
+        sales = Sale.query.filter_by(user_id=current_user.id).order_by(Sale.bill_date.desc()).paginate(
             page=page, per_page=20, error_out=False)
         return render_template('sales.html', sales=sales)
     
@@ -288,16 +303,161 @@ def create_app():
         search = request.args.get('search', '')
         return render_template('sales_enhanced.html', search=search)
     
+    # New Management System Routes
+    @app.route('/purchase-management')
+    @login_required
+    def purchase_management():
+        """Advanced Purchase Management page"""
+        return render_template('purchase_management.html')
+    
+    @app.route('/sales-management')
+    @login_required
+    def sales_management():
+        """Advanced Sales Management page"""
+        return render_template('sales_management.html')
+    
+    @app.route('/inventory-management')
+    @login_required
+    def inventory_management():
+        """Advanced Inventory Management page"""
+        return render_template('inventory_management.html')
+    
+    @app.route('/financial-management')
+    @login_required
+    def financial_management():
+        """Advanced Financial Management page"""
+        return render_template('financial_management.html')
+    
+    @app.route('/crate-management')
+    @login_required
+    def crate_management():
+        """Crate Management System"""
+        try:
+            # Get sample data for demonstration
+            from models import Party
+            
+            # Get parties for the current user - TEMPORARILY REMOVE USER FILTER
+            parties = Party.query.limit(10).all()  # Removed user_id filter temporarily
+            print(f"DEBUG: Found {len(parties)} parties for user {current_user.id}")
+            
+            # Sample crate types
+            crate_types = [
+                {'crate_type_id': 'JUTE_BAG_50KG', 'crate_name': 'Jute Bags - 50 KG'},
+                {'crate_type_id': 'PLASTIC_CRATE_20KG', 'crate_name': 'Plastic Crates - 20 KG'},
+                {'crate_type_id': 'GUNNY_BAG_40KG', 'crate_name': 'Gunny Bags - 40 KG'},
+                {'crate_type_id': 'CARDBOARD_BOX_10KG', 'crate_name': 'Cardboard Boxes - 10 KG'},
+                {'crate_type_id': 'MESH_BAG_25KG', 'crate_name': 'Mesh Bags - 25 KG'}
+            ]
+            
+            # Sample crate balances data - SIMPLIFIED APPROACH
+            crate_balances = []
+            
+            # Generate data for each party and crate type
+            for i, party in enumerate(parties):
+                for j, crate_type in enumerate(crate_types):
+                    # Generate sample data with fixed values for testing
+                    issued_qty = 100 + (i * 10) + (j * 5)
+                    returned_qty = 50 + (i * 5) + (j * 3)
+                    balance_qty = issued_qty - returned_qty
+                    outstanding_qty = 20 + (i * 2) + j
+                    total_outstanding = outstanding_qty * 15
+                    
+                    balance_data = {
+                        'party_id': str(party.party_cd),
+                        'party_code': str(party.party_cd),
+                        'party_name': str(party.party_nm),
+                        'crate_name': str(crate_type['crate_name']),
+                        'issued_qty': int(issued_qty),
+                        'returned_qty': int(returned_qty),
+                        'balance_qty': int(balance_qty),
+                        'outstanding_qty': int(outstanding_qty),
+                        'total_outstanding': int(total_outstanding)
+                    }
+                    
+                    crate_balances.append(balance_data)
+            
+            print(f"DEBUG: Generated {len(crate_balances)} crate balances")
+            if crate_balances:
+                print(f"DEBUG: Sample balance: {crate_balances[0]}")
+            
+            # Calculate statistics
+            stats = {
+                'total_parties': len(parties),
+                'total_crate_types': len(crate_types),
+                'total_outstanding_crates': sum(b['outstanding_qty'] for b in crate_balances),
+                'parties_with_outstanding': len(set(b['party_id'] for b in crate_balances if b['outstanding_qty'] > 0))
+            }
+            
+            print(f"DEBUG: Stats: {stats}")
+            
+            return render_template('crate_management.html', 
+                                 parties=parties,
+                                 crate_types=crate_types,
+                                 crate_balances=crate_balances,
+                                 stats=stats)
+        except Exception as e:
+            print(f"DEBUG: Error in crate_management route: {e}")
+            import traceback
+            traceback.print_exc()
+            # Fallback with empty data
+            return render_template('crate_management.html', 
+                                 parties=[],
+                                 crate_types=[],
+                                 crate_balances=[],
+                                 stats={'total_parties': 0, 'total_crate_types': 0, 'total_outstanding_crates': 0, 'parties_with_outstanding': 0})
+    
+    @app.route('/packing-management')
+    @login_required
+    def packing_management():
+        """Packing Management System"""
+        return render_template('packing_management.html')
+    
+    @app.route('/transport-management')
+    @login_required
+    def transport_management():
+        """Transport & Logistics Management System"""
+        return render_template('transport_management.html')
+    
+    @app.route('/gate-pass-management')
+    @login_required
+    def gate_pass_management():
+        """Gate Pass Management System"""
+        return render_template('gate_pass_management.html')
+    
+    @app.route('/agent-management')
+    @login_required
+    def agent_management():
+        """Agent Management System"""
+        return render_template('agent_management.html')
+
+    @app.route('/bank-management')
+    @login_required
+    def bank_management():
+        """Bank Management System"""
+        return render_template('bank_management.html')
+
+    @app.route('/schedule-management')
+    @login_required
+    def schedule_management():
+        """Schedule Management System"""
+        return render_template('schedule_management.html')
+
+    @app.route('/narration-management')
+    @login_required
+    def narration_management():
+        """Narration Management System"""
+        return render_template('narration_management.html')
+    
     @app.route('/cashbook')
     @login_required
     def cashbook():
-        """Cashbook management page (user-specific)"""
+        """Cashbook management page"""
         page = request.args.get('page', 1, type=int)
-        cashbook_entries = Cashbook.query.filter_by(user_id=current_user.id)\
-            .order_by(Cashbook.date.desc()).paginate(
+        cashbook_entries = Cashbook.query.filter_by(user_id=current_user.id).order_by(Cashbook.date.desc()).paginate(
             page=page, per_page=20, error_out=False)
         return render_template('cashbook.html', cashbook_entries=cashbook_entries)
     
+    # API Routes
     @app.route('/api/cashbook', methods=['POST'])
     @login_required
     def api_cashbook_create():
@@ -305,41 +465,38 @@ def create_app():
         try:
             data = request.get_json()
             
-            # Determine debit or credit amount
-            transaction_type = data.get('transaction_type', 'Payment')
-            amount = float(data.get('amount', 0))
-            
-            if transaction_type == 'Receipt':
-                dr_amt = 0
-                cr_amt = amount
-            else:
-                dr_amt = amount
-                cr_amt = 0
-            
-            # Calculate balance (this is a simplified calculation)
-            # In a real system, you'd calculate running balance
-            balance = cr_amt - dr_amt
-            
-            cashbook_entry = Cashbook(
+            new_entry = Cashbook(
                 user_id=current_user.id,
-                date=datetime.strptime(data.get('transaction_date'), '%Y-%m-%d').date(),
-                narration=data.get('narration', ''),
-                dr_amt=dr_amt,
-                cr_amt=cr_amt,
-                balance=balance,
-                party_cd=data.get('party_code', ''),
-                voucher_type=transaction_type,
-                voucher_no=data.get('voucher_no', '')
+                date=datetime.strptime(data['date'], '%Y-%m-%d').date(),
+                description=data['description'],
+                amount=data['amount'],
+                type=data['type'],
+                category=data.get('category', ''),
+                reference_no=data.get('reference_no', ''),
+                notes=data.get('notes', '')
             )
             
-            db.session.add(cashbook_entry)
+            db.session.add(new_entry)
             db.session.commit()
             
-            return jsonify({'success': True, 'message': 'Cashbook entry created successfully'})
+            return jsonify({
+                'success': True,
+                'message': 'Cashbook entry created successfully',
+                'entry': {
+                    'id': new_entry.id,
+                    'date': new_entry.date.strftime('%Y-%m-%d'),
+                    'description': new_entry.description,
+                    'amount': new_entry.amount,
+                    'type': new_entry.type,
+                    'category': new_entry.category,
+                    'reference_no': new_entry.reference_no,
+                    'notes': new_entry.notes
+                }
+            }), 201
             
         except Exception as e:
             db.session.rollback()
-            return jsonify({'success': False, 'message': str(e)})
+            return jsonify({'error': str(e)}), 400
     
     @app.route('/api/cashbook/<int:entry_id>', methods=['DELETE'])
     @login_required
@@ -348,34 +505,37 @@ def create_app():
         try:
             entry = Cashbook.query.filter_by(id=entry_id, user_id=current_user.id).first()
             if not entry:
-                return jsonify({'success': False, 'message': 'Entry not found'})
+                return jsonify({'error': 'Entry not found'}), 404
             
             db.session.delete(entry)
             db.session.commit()
             
-            return jsonify({'success': True, 'message': 'Entry deleted successfully'})
+            return jsonify({'success': True, 'message': 'Entry deleted successfully'}), 200
             
         except Exception as e:
             db.session.rollback()
-            return jsonify({'success': False, 'message': str(e)})
+            return jsonify({'error': str(e)}), 400
     
     @app.route('/api/parties')
     @login_required
     def api_parties():
-        """Get parties for dropdown"""
+        """Get parties for API"""
         try:
             parties = Party.query.filter_by(user_id=current_user.id).all()
             return jsonify({
-                'parties': [
-                    {
-                        'party_cd': party.party_cd,
-                        'party_nm': party.party_nm
-                    }
-                    for party in parties
-                ]
-            })
+                'success': True,
+                'parties': [{
+                    'id': party.id,
+                    'party_cd': party.party_cd,
+                    'party_nm': party.party_nm,
+                    'address': party.address,
+                    'phone': party.phone,
+                    'email': party.email,
+                    'balance': party.balance
+                } for party in parties]
+            }), 200
         except Exception as e:
-            return jsonify({'error': str(e)}), 500
+            return jsonify({'error': str(e)}), 400
     
     @app.route('/ledger-reports')
     @login_required
@@ -386,8 +546,8 @@ def create_app():
     @app.route('/purchase-sale-entry')
     @login_required
     def purchase_sale_entry():
-        """Purchase/Sale Entry page"""
-        current_time = datetime.now().strftime('%H:%M:%S')
+        """Purchase/Sale entry page"""
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         return render_template('purchase_sale_entry.html', current_time=current_time)
     
     @app.route('/reports')
@@ -405,114 +565,45 @@ def create_app():
     @app.route('/print/<bill_type>/<int:bill_no>')
     @login_required
     def print_bill(bill_type, bill_no):
-        """Print bill (purchase or sale)"""
+        """Print bill page"""
         try:
-            if bill_type.lower() == 'purchase':
-                transactions = Purchase.query.filter_by(bill_no=bill_no).all()
-                if not transactions:
+            if bill_type == 'purchase':
+                bill = Purchase.query.filter_by(bill_no=bill_no, user_id=current_user.id).first()
+                if not bill:
                     flash('Purchase bill not found', 'error')
                     return redirect(url_for('purchases'))
                 
                 # Get party details
-                party = Party.query.filter_by(party_cd=transactions[0].party_cd).first()
+                party = Party.query.filter_by(id=bill.party_id, user_id=current_user.id).first()
                 
-                # Prepare items data
-                items = []
-                sub_total = 0
-                total_discount = 0
-                
-                for trans in transactions:
-                    item = Item.query.filter_by(it_cd=trans.it_cd).first()
-                    amount = trans.qty * trans.rate
-                    net_amount = amount - trans.discount
-                    
-                    items.append({
-                        'it_cd': trans.it_cd,
-                        'it_nm': item.it_nm if item else trans.it_cd,
-                        'qty': trans.qty,
-                        'rate': trans.rate,
-                        'amount': amount,
-                        'discount': trans.discount,
-                        'net_amount': net_amount
-                    })
-                    
-                    sub_total += amount
-                    total_discount += trans.discount
-                
-                gst_amount = sub_total * 0.18  # 18% GST
-                grand_total = sub_total - total_discount + gst_amount
-                
-                return render_template('print_bill.html',
-                                     bill_type='PURCHASE',
-                                     bill_no=bill_no,
-                                     bill_date=transactions[0].bill_date.strftime('%d/%m/%Y'),
-                                     party_cd=transactions[0].party_cd,
-                                     party_nm=party.party_nm if party else transactions[0].party_cd,
-                                     party_address=f"{party.address1 or ''} {party.address2 or ''} {party.address3 or ''}".strip() if party else '',
-                                     party_phone=party.phone or party.mobile or '',
-                                     items=items,
-                                     sub_total=sub_total,
-                                     total_discount=total_discount,
-                                     gst_amount=gst_amount,
-                                     grand_total=grand_total,
-                                     generated_date=datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
-                
-            elif bill_type.lower() == 'sale':
-                transactions = Sale.query.filter_by(bill_no=bill_no).all()
-                if not transactions:
+                return render_template('print_bill.html', 
+                                    bill=bill, 
+                                    party=party, 
+                                    bill_type='Purchase',
+                                    items=bill.items if hasattr(bill, 'items') else [])
+            
+            elif bill_type == 'sale':
+                bill = Sale.query.filter_by(bill_no=bill_no, user_id=current_user.id).first()
+                if not bill:
                     flash('Sale bill not found', 'error')
                     return redirect(url_for('sales'))
                 
                 # Get party details
-                party = Party.query.filter_by(party_cd=transactions[0].party_cd).first()
+                party = Party.query.filter_by(id=bill.party_id, user_id=current_user.id).first()
                 
-                # Prepare items data
-                items = []
-                sub_total = 0
-                total_discount = 0
-                
-                for trans in transactions:
-                    item = Item.query.filter_by(it_cd=trans.it_cd).first()
-                    amount = trans.qty * trans.rate
-                    net_amount = amount - trans.discount
-                    
-                    items.append({
-                        'it_cd': trans.it_cd,
-                        'it_nm': item.it_nm if item else trans.it_cd,
-                        'qty': trans.qty,
-                        'rate': trans.rate,
-                        'amount': amount,
-                        'discount': trans.discount,
-                        'net_amount': net_amount
-                    })
-                    
-                    sub_total += amount
-                    total_discount += trans.discount
-                
-                gst_amount = sub_total * 0.18  # 18% GST
-                grand_total = sub_total - total_discount + gst_amount
-                
-                return render_template('print_bill.html',
-                                     bill_type='SALE',
-                                     bill_no=bill_no,
-                                     bill_date=transactions[0].bill_date.strftime('%d/%m/%Y'),
-                                     party_cd=transactions[0].party_cd,
-                                     party_nm=party.party_nm if party else transactions[0].party_cd,
-                                     party_address=f"{party.address1 or ''} {party.address2 or ''} {party.address3 or ''}".strip() if party else '',
-                                     party_phone=party.phone or party.mobile or '',
-                                     items=items,
-                                     sub_total=sub_total,
-                                     total_discount=total_discount,
-                                     gst_amount=gst_amount,
-                                     grand_total=grand_total,
-                                     generated_date=datetime.now().strftime('%d/%m/%Y %H:%M:%S'))
+                return render_template('print_bill.html', 
+                                    bill=bill, 
+                                    party=party, 
+                                    bill_type='Sale',
+                                    items=bill.items if hasattr(bill, 'items') else [])
+            
             else:
                 flash('Invalid bill type', 'error')
                 return redirect(url_for('dashboard'))
                 
         except Exception as e:
             logger.error(f"Print bill error: {e}")
-            flash('Error generating bill', 'error')
+            flash('Error printing bill', 'error')
             return redirect(url_for('dashboard'))
     
     # Error handlers
@@ -525,32 +616,63 @@ def create_app():
         db.session.rollback()
         return render_template('errors/500.html'), 500
     
+    @app.route('/test-crate-data')
+    def test_crate_data():
+        """Test route to debug crate data without authentication"""
+        try:
+            from models import Party
+            
+            # Get all parties (not filtered by user)
+            parties = Party.query.limit(5).all()
+            print(f"TEST: Found {len(parties)} parties total")
+            
+            # Sample crate types
+            crate_types = [
+                {'crate_type_id': 'JUTE_BAG_50KG', 'crate_name': 'Jute Bags - 50 KG'},
+                {'crate_type_id': 'PLASTIC_CRATE_20KG', 'crate_name': 'Plastic Crates - 20 KG'}
+            ]
+            
+            # Sample crate balances data
+            crate_balances = []
+            for party in parties:
+                for crate_type in crate_types:
+                    # Generate sample data
+                    issued_qty = random.randint(50, 200)
+                    returned_qty = random.randint(20, issued_qty - 10)
+                    balance_qty = issued_qty - returned_qty
+                    outstanding_qty = random.randint(0, balance_qty)
+                    
+                    crate_balances.append({
+                        'party_id': party.party_cd,
+                        'party_code': party.party_cd,
+                        'party_name': party.party_nm,
+                        'crate_name': crate_type['crate_name'],
+                        'issued_qty': issued_qty,
+                        'returned_qty': returned_qty,
+                        'balance_qty': balance_qty,
+                        'outstanding_qty': outstanding_qty,
+                        'total_outstanding': outstanding_qty * random.randint(5, 15)
+                    })
+            
+            print(f"TEST: Generated {len(crate_balances)} crate balances")
+            
+            return jsonify({
+                'success': True,
+                'parties_count': len(parties),
+                'crate_balances_count': len(crate_balances),
+                'sample_balance': crate_balances[0] if crate_balances else None,
+                'parties': [{'code': p.party_cd, 'name': p.party_nm} for p in parties]
+            })
+            
+        except Exception as e:
+            print(f"TEST: Error: {e}")
+            return jsonify({'success': False, 'error': str(e)})
+    
     return app
-
-def init_db():
-    """Initialize database with sample data"""
-    with create_app().app_context():
-        db.create_all()
-        
-        # Create admin user if not exists
-        if not User.query.filter_by(username='admin').first():
-            admin_user = User(
-                username='admin',
-                email='admin@business.com',
-                password_hash=generate_password_hash('admin123'),
-                role='admin',
-                is_active=True
-            )
-            db.session.add(admin_user)
-            db.session.commit()
-            print("Admin user created: admin/admin123")
 
 if __name__ == '__main__':
     app = create_app()
-    
-    # Initialize database
     with app.app_context():
         db.create_all()
-    
-    # Run the application
+        print("Database initialized successfully!")
     app.run(debug=True, host='0.0.0.0', port=5000) 

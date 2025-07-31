@@ -274,6 +274,48 @@
     to { transform: rotate(360deg); }
 }
 
+/* Module Status Cards */
+.module-status-card {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.module-status-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.module-status-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border-color: rgba(255,255,255,0.3);
+}
+
+.module-status-card:hover::before {
+    left: 100%;
+}
+
+.module-status-card .btn-light {
+    background: rgba(255,255,255,0.9);
+    border: none;
+    color: #333;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.module-status-card .btn-light:hover {
+    background: white;
+    transform: scale(1.05);
+}
+
 /* Page Header */
 .page-header {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -546,6 +588,62 @@ body.modal-open {
     </div>
 </div>
 
+<!-- Module Status Cards Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="section-card">
+            <div class="card-header">
+                <h6><i class="fas fa-cubes me-2"></i>System Modules Status</h6>
+                <span class="badge bg-success">All Modules Active</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <div class="module-status-card bg-primary text-white p-3 rounded-3 text-center">
+                            <i class="fas fa-shopping-cart fa-2x mb-2"></i>
+                            <h6 class="mb-1">🛒 Purchase Management</h6>
+                            <small class="opacity-75">Complete System</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('purchase_management') }}" class="btn btn-sm btn-light">Access</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="module-status-card bg-success text-white p-3 rounded-3 text-center">
+                            <i class="fas fa-cash-register fa-2x mb-2"></i>
+                            <h6 class="mb-1">💰 Sales Management</h6>
+                            <small class="opacity-75">Complete System</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('sales_management') }}" class="btn btn-sm btn-light">Access</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="module-status-card bg-info text-white p-3 rounded-3 text-center">
+                            <i class="fas fa-boxes fa-2x mb-2"></i>
+                            <h6 class="mb-1">📦 Inventory Management</h6>
+                            <small class="opacity-75">Complete System</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('inventory_management') }}" class="btn btn-sm btn-light">Access</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="module-status-card bg-warning text-white p-3 rounded-3 text-center">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <h6 class="mb-1">📊 Financial Management</h6>
+                            <small class="opacity-75">Complete System</small>
+                            <div class="mt-2">
+                                <a href="{{ url_for('financial_management') }}" class="btn btn-sm btn-light">Access</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Content Row -->
 <div class="row">
     <!-- Enhanced Quick Actions Card -->
@@ -557,48 +655,46 @@ body.modal-open {
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-6">
-                        <button class="btn btn-primary w-100 quick-action-btn"
-                                hx-get="/api/parties/add-form"
-                                hx-target="#quickActionModal .modal-content"
-                                hx-swap="innerHTML"
-                                data-bs-toggle="modal"
-                                data-bs-target="#quickActionModal">
-                            <i class="fas fa-user-plus fa-2x mb-2"></i>
-                            <div class="fw-bold">ADD PARTY</div>
-                            <small class="opacity-75">NEW CUSTOMER/SUPPLIER</small>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button class="btn btn-success w-100 quick-action-btn"
-                                hx-get="/api/items/add-form"
-                                hx-target="#quickActionModal .modal-content"
-                                hx-swap="innerHTML"
-                                data-bs-toggle="modal"
-                                data-bs-target="#quickActionModal">
-                            <i class="fas fa-box fa-2x mb-2"></i>
-                            <div class="fw-bold">ADD ITEM</div>
-                            <small class="opacity-75">NEW PRODUCT</small>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button class="btn btn-info w-100 quick-action-btn"
-                                onclick="openQuickActionModal('sale')">
-                            <i class="fas fa-receipt fa-2x mb-2"></i>
-                            <div class="fw-bold">NEW SALE</div>
-                            <small class="opacity-75">CREATE INVOICE</small>
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button class="btn btn-warning w-100 quick-action-btn"
-                                hx-get="/api/purchases/add-form"
-                                hx-target="#quickActionModal .modal-content"
-                                hx-swap="innerHTML"
-                                data-bs-toggle="modal"
-                                data-bs-target="#quickActionModal">
+                        <a href="{{ url_for('purchase_management') }}" class="btn btn-primary w-100 quick-action-btn text-decoration-none">
                             <i class="fas fa-shopping-cart fa-2x mb-2"></i>
-                            <div class="fw-bold">NEW PURCHASE</div>
-                            <small class="opacity-75">RECORD PURCHASE</small>
-                        </button>
+                            <div class="fw-bold">🛒 PURCHASE</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('sales_management') }}" class="btn btn-success w-100 quick-action-btn text-decoration-none">
+                            <i class="fas fa-cash-register fa-2x mb-2"></i>
+                            <div class="fw-bold">💰 SALES</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('inventory_management') }}" class="btn btn-info w-100 quick-action-btn text-decoration-none">
+                            <i class="fas fa-boxes fa-2x mb-2"></i>
+                            <div class="fw-bold">📦 INVENTORY</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('financial_management') }}" class="btn btn-warning w-100 quick-action-btn text-decoration-none">
+                            <i class="fas fa-chart-line fa-2x mb-2"></i>
+                            <div class="fw-bold">📊 FINANCIAL</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('crate_management') }}" class="btn btn-secondary w-100 quick-action-btn text-decoration-none">
+                            <i class="fas fa-boxes fa-2x mb-2"></i>
+                            <div class="fw-bold">🧺 CRATE</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('packing_management') }}" class="btn btn-dark w-100 quick-action-btn text-decoration-none">
+                            <i class="fas fa-box fa-2x mb-2"></i>
+                            <div class="fw-bold">📦 PACKING</div>
+                            <small class="opacity-75">MANAGEMENT</small>
+                        </a>
                     </div>
                 </div>
             </div>
