@@ -26,7 +26,7 @@ dbfpy3>=3.0.0
 requests==2.31.0
 
 # Data Processing and Export
-pandas==1.5.3
+pandas>=2.0.0
 openpyxl==3.1.2
 xlrd==2.0.1
 
