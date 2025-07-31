@@ -19,7 +19,7 @@ python-dotenv==1.0.0
 
 # Legacy Data Import and Analysis
 dbfread==2.0.7
-dbfpy3==0.0.1
+dbfpy3>=3.0.0
 
 # HTTP Requests (for API testing)
 requests==2.31.0
