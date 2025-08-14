@@ -9,7 +9,7 @@ Werkzeug==2.3.7
 flask_migrate
 flask_cors
 jwt
-
+psutil
 email-validator>=2.0.0
 
 
