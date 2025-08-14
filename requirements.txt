@@ -7,6 +7,7 @@ Flask-WTF==1.1.1
 WTForms==3.0.1
 Werkzeug==2.3.7
 flask_migrate
+flask_cors
 
 # Database and ORM
 SQLAlchemy>=2.0.31
