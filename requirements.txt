@@ -10,6 +10,9 @@ flask_migrate
 flask_cors
 jwt
 
+email-validator>=2.0.0
+
+
 # Database and ORM
 SQLAlchemy>=2.0.31
 Jinja2==3.1.2
