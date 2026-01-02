@@ -1,0 +1,3175 @@
+{% extends "base.html" %}
+
+{% block title %}Purchase/Sale Entry - Business Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Simple Gradient Header with Live Stats -->
+    <div class="row mb-4">
+        <div class="col-12">
+                                <div class="card fixed-header-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                <div class="card-body p-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exchange-alt me-3" style="font-size: 2rem; color: white;"></i>
+                                <div>
+                                    <h3 class="mb-0" style="color: white; font-weight: 700;">Purchase/Sale Entry</h3>
+                                    <p class="mb-0" style="color: rgba(255,255,255,0.8);">Manage your business transactions efficiently</p>
+                            </div>
+                        </div>
+                                </div>
+                        <div class="col-md-8">
+                            <div class="row text-center">
+                                <div class="col-md-4 col-4">
+                                    <div class="stats-item">
+                                        <h4 class="mb-0" style="color: white; font-weight: 700; font-size: 2rem;" id="totalBags">0</h4>
+                                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Total Bags</p>
+                                </div>
+                            </div>
+                                <div class="col-md-4 col-4">
+                                    <div class="stats-item">
+                                        <h4 class="mb-0" style="color: white; font-weight: 700; font-size: 2rem;" id="totalSale">0</h4>
+                                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Total Sale</p>
+                        </div>
+                                </div>
+                                <div class="col-md-4 col-4">
+                                    <div class="stats-item">
+                                        <h4 class="mb-0" style="color: white; font-weight: 700; font-size: 2rem;" id="totalBalance">0</h4>
+                                        <p class="mb-0" style="color: rgba(255,255,255,0.8);">Balance</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Purchase Entry Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card enhanced-card">
+                <div class="card-header enhanced-header">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-shopping-cart me-3"></i>
+                        <h5 class="mb-0">Purchase Entry</h5>
+                        <div class="ms-auto">
+                            <button class="btn btn-success btn-sm" onclick="addNewPurchase()">
+                                <i class="fas fa-plus"></i> New Purchase
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped mb-0" id="purchaseTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="fas fa-hashtag me-1"></i>S.No.</th>
+                                    <th><i class="fas fa-calendar me-1"></i>Date</th>
+                                    <th><i class="fas fa-user me-1"></i>Party Code</th>
+                                    <th><i class="fas fa-user-tie me-1"></i>Party Name</th>
+                                    <th><i class="fas fa-box me-1"></i>Item</th>
+                                    <th><i class="fas fa-weight me-1"></i>Bags</th>
+                                    <th><i class="fas fa-chart-line me-1"></i>Sale</th>
+                                    <th><i class="fas fa-balance-scale me-1"></i>Balance (Bags)</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="purchaseTableBody">
+                                <!-- Purchase entries will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Sale Entry Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card enhanced-card sale-entry-section">
+                <div class="card-header enhanced-header">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-receipt me-3"></i>
+                        <h5 class="mb-0">Sale Entry</h5>
+                </div>
+                </div>
+                <div class="card-body">
+                    <!-- Enhanced Header Row -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-file-invoice me-1"></i>Bill No
+                            </label>
+                            <input type="number" class="form-control enhanced-input" id="saleBillNo" name="saleBillNo" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-sort-numeric-up me-1"></i>Seq
+                            </label>
+                            <input type="number" class="form-control enhanced-input" id="saleBillSequence" name="saleBillSequence" value="1" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-calendar me-1"></i>Date
+                            </label>
+                            <input type="date" class="form-control enhanced-input" id="saleDate" name="saleDate" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-user me-1"></i>Code
+                            </label>
+                            <div class="input-group">
+                                <input type="text" class="form-control enhanced-input" id="salePartyCode" name="salePartyCode" placeholder="Code" required readonly>
+                                <button type="button" class="btn btn-outline-primary" onclick="openSalePartySearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-user-tie me-1"></i>Party Name
+                            </label>
+                            <input type="text" class="form-control enhanced-input" id="salePartyName" name="salePartyName" readonly>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-weight me-1"></i>Bags
+                            </label>
+                            <input type="number" class="form-control enhanced-input" id="saleBags" name="saleBags" min="0" step="1" required>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-balance-scale me-1"></i>Weight
+                            </label>
+                            <input type="number" class="form-control enhanced-input" id="saleWeight" name="saleWeight" min="0" step="0.01">
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Rate
+                            </label>
+                            <input type="number" class="form-control enhanced-input" id="saleRate" name="saleRate" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">
+                                <i class="fas fa-calculator me-1"></i>Amount
+                            </label>
+                            <input type="number" class="form-control enhanced-input amount-field" id="saleAmount" name="saleAmount" readonly>
+                        </div>
+                    </div>
+                    
+                    <!-- Enhanced Sale Entries Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped" id="saleEntriesTable">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th><i class="fas fa-hashtag me-1"></i>S.No.</th>
+                                    <th><i class="fas fa-user me-1"></i>Party Code</th>
+                                    <th><i class="fas fa-user-tie me-1"></i>Party Name</th>
+                                    <th><i class="fas fa-weight me-1"></i>Bags</th>
+                                    <th><i class="fas fa-balance-scale me-1"></i>Weight</th>
+                                    <th><i class="fas fa-dollar-sign me-1"></i>Rate</th>
+                                    <th><i class="fas fa-calculator me-1"></i>Amount</th>
+                                    <th><i class="fas fa-cogs me-1"></i>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="saleEntriesTableBody">
+                                <!-- Sale entries will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                                                                            <!-- Enhanced Action Buttons -->
+                            <div class="row mt-3">
+                        <div class="col-12">
+                                    <button type="button" class="btn btn-success btn-lg" onclick="addSaleEntry()">
+                                <i class="fas fa-plus"></i> Add Entry
+                            </button>
+                                    <button type="button" class="btn btn-info btn-lg ms-2" onclick="refreshData()">
+                                        <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                                    <button type="button" class="btn btn-primary btn-lg ms-2" onclick="saveAllSales()">
+                                        <i class="fas fa-save"></i> Save All
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-lg ms-2" onclick="clearSaleForm()">
+                                        <i class="fas fa-eraser"></i> Clear
+                                    </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Keyboard Shortcuts Section -->
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card shortcut-card">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <small class="text-white">
+                                <i class="fas fa-keyboard me-2"></i>
+                        <strong>Keyboard Shortcuts:</strong> 
+                                <span class="shortcut-item">↑/PgUp/↓/PgDn</span> - Scroll 
+                                <span class="shortcut-item">←</span> - Edit 
+                                <span class="shortcut-item">F5</span> - Order 
+                                <span class="shortcut-item">F6</span> - Find 
+                                <span class="shortcut-item">F7</span> - Sale 
+                                <span class="shortcut-item">F8</span> - Adjwt 
+                                <span class="shortcut-item">F9</span> - Rt. 
+                                <span class="shortcut-item">F10</span> - Spt
+                    </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <small class="text-white">
+                                <i class="fas fa-clock me-1"></i>
+                                <span id="currentTimeDisplay">{{ current_time }}</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Purchase Entry Modal -->
+<div class="modal fade" id="purchaseEntryModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content enhanced-modal">
+            <div class="modal-header enhanced-modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus me-2"></i>New Purchase Entry
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body enhanced-modal-body">
+                <form id="purchaseForm">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Bill No</label>
+                            <input type="number" class="form-control enhanced-input" id="purchaseBillNo" name="purchaseBillNo" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Date</label>
+                            <input type="date" class="form-control enhanced-input" id="purchaseDate" name="purchaseDate" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Party Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control enhanced-input" id="purchasePartyCode" name="purchasePartyCode" required readonly>
+                                <button type="button" class="btn btn-outline-primary" onclick="openPurchasePartySearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label enhanced-label">Party Name</label>
+                            <input type="text" class="form-control enhanced-input" id="purchasePartyName" name="purchasePartyName" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Item Code</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control enhanced-input" id="purchaseItemCode" name="purchaseItemCode" required readonly>
+                                <button type="button" class="btn btn-outline-primary" onclick="openItemSearch()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <label class="form-label enhanced-label">Item Name</label>
+                            <input type="text" class="form-control enhanced-input" id="purchaseItemName" name="purchaseItemName" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Bags</label>
+                            <input type="number" class="form-control enhanced-input" id="purchaseBags" name="purchaseBags" min="0" step="1" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Weight</label>
+                            <input type="number" class="form-control enhanced-input" id="purchaseWeight" name="purchaseWeight" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Rate</label>
+                            <input type="number" class="form-control enhanced-input" id="purchaseRate" name="purchaseRate" min="0" step="0.01" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label enhanced-label">Amount</label>
+                            <input type="number" class="form-control enhanced-input amount-field" id="purchaseAmount" name="purchaseAmount" readonly>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer enhanced-modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePurchase()">Save Purchase</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Party Search Modal -->
+<div class="modal fade" id="partySearchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content enhanced-modal">
+            <div class="modal-header enhanced-modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-search me-2"></i>Select Party
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body enhanced-modal-body">
+                <div class="search-container mb-3">
+                    <input type="text" class="form-control enhanced-search-input" id="partySearchInput" placeholder="Search parties by code or name...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="partySearchTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="fas fa-hashtag me-1"></i>Code</th>
+                                <th><i class="fas fa-user me-1"></i>Party Name</th>
+                                <th><i class="fas fa-phone me-1"></i>Phone</th>
+                                <th><i class="fas fa-map-marker-alt me-1"></i>Place</th>
+                                <th><i class="fas fa-cogs me-1"></i>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="partySearchTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Item Search Modal -->
+<div class="modal fade" id="itemSearchModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content enhanced-modal">
+            <div class="modal-header enhanced-modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-box me-2"></i>Select Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body enhanced-modal-body">
+                <div class="search-container mb-3">
+                    <input type="text" class="form-control enhanced-search-input" id="itemSearchInput" placeholder="Search items by code or name...">
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped" id="itemSearchTable">
+                        <thead class="table-primary">
+                            <tr>
+                                <th><i class="fas fa-hashtag me-1"></i>Code</th>
+                                <th><i class="fas fa-box me-1"></i>Name</th>
+                                <th><i class="fas fa-tags me-1"></i>Category</th>
+                                <th><i class="fas fa-dollar-sign me-1"></i>Rate</th>
+                                <th><i class="fas fa-cogs me-1"></i>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="itemSearchTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentPurchaseId = null;
+let selectedPurchaseEntry = null;
+let parties = [];
+let items = [];
+let purchases = [];
+let saleEntries = []; // Array to store multiple sale entries
+let currentSaleEntryId = 1;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    setCurrentDate();
+    setCurrentTime();
+    loadParties();
+    loadItems();
+    loadPurchases();
+    setupEventListeners();
+    setupKeyboardShortcuts();
+    
+    // Initialize live stats
+    updateLiveStats();
+});
+
+function setCurrentDate() {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Set sale date
+    const saleDateField = document.getElementById('saleDate');
+    if (saleDateField) {
+        saleDateField.value = today;
+    }
+    
+    // Set purchase date
+    const purchaseDateField = document.getElementById('purchaseDate');
+    if (purchaseDateField) {
+        purchaseDateField.value = today;
+    }
+    
+    // Also set any other date fields that might exist
+    const allDateFields = document.querySelectorAll('input[type="date"]');
+    allDateFields.forEach(field => {
+        if (!field.value) {
+            field.value = today;
+        }
+    });
+}
+
+function setCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour12: false, 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    // Note: currentTime element removed from header, keeping function for future use
+}
+
+// Function to update live stats in header
+function updateLiveStats() {
+    // Update total bags from selected purchase
+    const selectedPurchase = getSelectedPurchase();
+    let totalBags = 0;
+    let soldBags = 0;
+    
+    if (selectedPurchase) {
+        totalBags = selectedPurchase.qty || 0; // Use 'qty' field, not 'bags'
+        document.getElementById('totalBags').textContent = totalBags;
+        
+        // Get live sale and balance values from the purchase table row
+        const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${selectedPurchase.id}"]`);
+        if (selectedRow) {
+            const cells = selectedRow.cells;
+            // Sale column (index 6) and Balance column (index 7)
+            const saleCell = cells[6];
+            const balanceCell = cells[7];
+            
+            if (saleCell && balanceCell) {
+                soldBags = parseInt(saleCell.textContent) || 0;
+                const balance = parseInt(balanceCell.textContent) || 0;
+                
+                document.getElementById('totalSale').textContent = soldBags;
+                document.getElementById('totalBalance').textContent = balance;
+            }
+        }
+    } else {
+        document.getElementById('totalBags').textContent = '0';
+        document.getElementById('totalSale').textContent = '0';
+        document.getElementById('totalBalance').textContent = '0';
+    }
+    
+    console.log('Live Stats Updated:', {
+        selectedPurchase: selectedPurchase,
+        totalBags: totalBags,
+        soldBags: soldBags,
+        balance: document.getElementById('totalBalance').textContent
+    });
+}
+
+// Function to get selected purchase data
+function getSelectedPurchase() {
+    if (selectedPurchaseEntry) {
+        return selectedPurchaseEntry;
+    }
+    return null;
+}
+
+function setupEventListeners() {
+    // Sale party code field click to open search
+    document.getElementById('salePartyCode').addEventListener('click', function() {
+        openSalePartySearch();
+    });
+
+    // Purchase party code field click to open search
+    document.getElementById('purchasePartyCode').addEventListener('click', function() {
+        openPurchasePartySearch();
+    });
+
+    // Purchase item code field click to open search
+    document.getElementById('purchaseItemCode').addEventListener('click', function() {
+        openItemSearch();
+    });
+
+    // Party search input
+    document.getElementById('partySearchInput').addEventListener('input', function() {
+        searchParties(this.value);
+    });
+
+    // Item search input
+    document.getElementById('itemSearchInput').addEventListener('input', function() {
+        searchItems(this.value);
+    });
+
+    // Auto-calculate amounts and real-time updates
+    document.getElementById('saleBags').addEventListener('input', function() {
+        calculateSaleAmount();
+        updateRealTimeSaleBalance();
+        updateLiveStats();
+    });
+    document.getElementById('saleRate').addEventListener('input', function() {
+        calculateSaleAmount();
+        updateRealTimeSaleBalance();
+        updateLiveStats();
+    });
+
+    document.getElementById('purchaseBags').addEventListener('input', calculatePurchaseAmount);
+    document.getElementById('purchaseWeight').addEventListener('input', calculatePurchaseAmount);
+    document.getElementById('purchaseRate').addEventListener('input', calculatePurchaseAmount);
+
+    // Enter key to add new sale entry
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            e.preventDefault();
+            addSaleEntry();
+        }
+    });
+
+    // Mobile-specific enhancements
+    setupMobileEnhancements();
+    
+    // Enhanced modal positioning and scrolling fixes
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        modal.addEventListener('show.bs.modal', function() {
+            // Remove any existing backdrops except the first one
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure modal is properly centered
+            const modalDialog = this.querySelector('.modal-dialog');
+            if (modalDialog) {
+                modalDialog.style.margin = '0 auto';
+                modalDialog.style.maxHeight = '90vh';
+                modalDialog.style.display = 'flex';
+                modalDialog.style.alignItems = 'center';
+                modalDialog.style.justifyContent = 'center';
+                modalDialog.style.maxWidth = '90%';
+                
+                // Mobile-specific centering
+                if (window.innerWidth <= 768) {
+                    modalDialog.style.position = 'fixed';
+                    modalDialog.style.top = '50%';
+                    modalDialog.style.left = '50%';
+                    modalDialog.style.transform = 'translate(-50%, -50%)';
+                    modalDialog.style.width = 'calc(100% - 1rem)';
+                    modalDialog.style.maxWidth = 'calc(100% - 1rem)';
+                }
+            }
+            
+            // Allow body scrolling and remove dark overlay
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+            
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.opacity = '0.2';
+                    backdrop.style.pointerEvents = 'auto';
+                    backdrop.style.transition = 'none';
+                    backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+                }
+            }, 10);
+        });
+        
+        modal.addEventListener('shown.bs.modal', function() {
+            // Remove any additional backdrops that might have been created
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure modal content is scrollable if needed
+            const modalContent = this.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.maxHeight = '90vh';
+                modalContent.style.overflowY = 'auto';
+                
+                // Mobile-specific content sizing
+                if (window.innerWidth <= 768) {
+                    modalContent.style.maxHeight = '85vh';
+                    modalContent.style.width = '100%';
+                }
+            }
+            
+            // Ensure modal body is scrollable
+            const modalBody = this.querySelector('.modal-body');
+            if (modalBody) {
+                modalBody.style.maxHeight = 'calc(90vh - 120px)';
+                modalBody.style.overflowY = 'auto';
+            }
+            
+            setTimeout(() => {
+                const backdrop = document.querySelector('.modal-backdrop');
+                if (backdrop) {
+                    backdrop.style.opacity = '0.2';
+                    backdrop.style.pointerEvents = 'auto';
+                    backdrop.style.transition = 'none';
+                    backdrop.style.backgroundColor = 'rgba(0, 0, 0, 0.2)';
+                }
+                // Focus on search input if it exists
+                const searchInput = this.querySelector('.enhanced-search-input');
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }, 10);
+        });
+        
+        // Prevent input events from creating additional backdrops
+        modal.addEventListener('input', function(e) {
+            // Remove any additional backdrops that might be created during typing
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            if (backdrops.length > 1) {
+                for (let i = 1; i < backdrops.length; i++) {
+                    backdrops[i].remove();
+                }
+            }
+            
+            // Ensure the remaining backdrop stays at correct opacity
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.style.opacity = '0.3';
+                backdrop.style.pointerEvents = 'none';
+                backdrop.style.transition = 'none';
+            }
+        });
+        
+        // Handle modal hide to restore normal scrolling
+        modal.addEventListener('hidden.bs.modal', function() {
+            // Restore normal body scrolling
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        });
+    });
+}
+
+function setupKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        
+        switch(e.key) {
+            case 'F5':
+                e.preventDefault();
+                refreshData();
+                break;
+            case 'F6':
+                e.preventDefault();
+                openSalePartySearch();
+                break;
+            case 'F7':
+                e.preventDefault();
+                saveSale();
+                break;
+            case 'F8':
+                e.preventDefault();
+                addNewPurchase();
+                break;
+            case 'F9':
+                e.preventDefault();
+                calculateSaleAmount();
+                break;
+            case 'F10':
+                e.preventDefault();
+                clearSaleForm();
+                break;
+        }
+    });
+}
+
+function loadParties() {
+    fetch('/api/parties')
+        .then(response => response.json())
+        .then(data => {
+            parties = data.parties || [];
+        })
+        .catch(error => console.error('Error loading parties:', error));
+}
+
+function loadItems() {
+    fetch('/api/items')
+        .then(response => response.json())
+        .then(data => {
+            items = data.items || [];
+        })
+        .catch(error => console.error('Error loading items:', error));
+}
+
+function loadPurchases() {
+    console.log('Loading purchases...');
+    fetch('/api/purchases')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Purchases loaded:', data);
+            purchases = data.purchases || [];
+            displayPurchases();
+        })
+        .catch(error => {
+            console.error('Error loading purchases:', error);
+            showAlert('Error loading purchases: ' + error.message, 'error');
+        });
+}
+
+function displayPurchases() {
+    console.log('Displaying purchases:', purchases);
+    const tbody = document.getElementById('purchaseTableBody');
+    if (!tbody) {
+        console.error('Purchase table body not found!');
+        return;
+    }
+    tbody.innerHTML = '';
+    
+    let displayIndex = 0; // Counter for displayed rows
+        
+    let availablePurchases = 0; // Counter for available purchases
+    
+    purchases.forEach((purchase, index) => {
+        // Calculate sale and balance (balance = remaining bags available for sale)
+        const totalBags = purchase.qty || 0;
+        const soldBags = purchase.sold_bags || 0;
+        const balance = totalBags - soldBags;
+        
+        // Skip records where balance is 0 or negative (no bags left to sell)
+        if (balance <= 0) {
+            console.log(`Skipping purchase ${purchase.id} - balance is ${balance} (no bags left to sell)`);
+            return;
+        }
+        
+        availablePurchases++;
+        
+        const row = tbody.insertRow();
+        
+        // Alternate row colors like FoxPro
+        if (displayIndex % 2 === 0) {
+            row.className = 'table-primary';
+        } else {
+            row.className = 'table-secondary';
+        }
+        
+        // Add data attribute for real-time updates
+        row.setAttribute('data-purchase-id', purchase.id);
+        
+        row.innerHTML = `
+            <td>${displayIndex + 1}</td>
+            <td>${new Date(purchase.bill_date).toLocaleDateString()}</td>
+            <td>${purchase.party_cd || 'N/A'}</td>
+            <td>${purchase.party_nm || 'Unknown'}</td>
+            <td>${purchase.it_nm || 'Unknown'}</td>
+            <td>${totalBags}</td>
+            <td>${soldBags}</td>
+            <td>${balance}</td>
+            <td>
+                <button class="btn btn-sm btn-success" onclick="selectPurchase(${purchase.id})">
+                    <i class="fas fa-check"></i> Select
+                </button>
+            </td>
+        `;
+        
+        displayIndex++; // Increment counter for next row
+        
+        // Add click functionality to the entire row for mobile
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the button
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                selectPurchase(purchase.id);
+            }
+        });
+        
+        // Add hover effect
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+        
+        // Make row clickable for editing
+        row.style.cursor = 'pointer';
+        row.onclick = () => selectPurchase(purchase.id);
+    });
+    
+    // Show message if no purchases are available
+    if (availablePurchases === 0) {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td colspan="9" class="text-center text-muted py-4">
+                <i class="fas fa-info-circle me-2"></i>
+                No purchase records available for sale (all balances are 0 or negative)
+            </td>
+        `;
+    }
+}
+
+function selectPurchase(purchaseId) {
+    currentPurchaseId = purchaseId;
+    selectedPurchaseEntry = purchases.find(p => p.id === purchaseId);
+    
+    if (selectedPurchaseEntry) {
+        // Remove previous selection highlighting
+        document.querySelectorAll('#purchaseTableBody tr').forEach(row => {
+            row.classList.remove('purchase-row-selected');
+        });
+        
+        // Add highlighting to selected row
+        const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${purchaseId}"]`);
+        if (selectedRow) {
+            selectedRow.classList.add('purchase-row-selected');
+        }
+        
+        // Fill header fields with purchase data
+        document.getElementById('saleBillNo').value = selectedPurchaseEntry.bill_no || '';
+        document.getElementById('saleDate').value = new Date(selectedPurchaseEntry.bill_date).toLocaleDateString();
+        document.getElementById('salePartyCode').value = selectedPurchaseEntry.party_cd || '';
+        document.getElementById('salePartyName').value = selectedPurchaseEntry.party_nm || '';
+        
+        // Calculate available bags
+        const totalBags = selectedPurchaseEntry.qty || 0;
+        const soldBags = selectedPurchaseEntry.sold_bags || 0;
+        const availableBags = totalBags - soldBags;
+        
+        // Update max bags display
+        const maxBagsElement = document.getElementById('maxBags');
+        if (maxBagsElement) {
+            maxBagsElement.textContent = availableBags;
+        }
+        
+        // Clear existing sale entries
+        saleEntries = [];
+        currentSaleEntryId = 1;
+        displaySaleEntries();
+        
+        // Update live stats in header
+        updateLiveStats();
+        
+        showAlert(`Purchase ${purchaseId} selected! Available bags: ${availableBags}`, 'success');
+    }
+}
+
+function addNewPurchase() {
+    // Clear purchase form
+    document.getElementById('purchaseForm').reset();
+    setCurrentDate();
+    
+    // Show purchase modal
+    new bootstrap.Modal(document.getElementById('purchaseEntryModal')).show();
+}
+
+function savePurchase() {
+    const formData = new FormData(document.getElementById('purchaseForm'));
+    
+    const data = {
+        bill_no: parseInt(formData.get('purchaseBillNo')),
+        bill_date: formData.get('purchaseDate'),
+        party_cd: formData.get('purchasePartyCode'),
+        it_cd: formData.get('purchaseItemCode'),
+        qty: parseFloat(formData.get('purchaseBags')),
+        tot_smt: parseFloat(formData.get('purchaseWeight')),
+        rate: parseFloat(formData.get('purchaseRate')),
+        sal_amt: parseFloat(formData.get('purchaseAmount')),
+        tot_amt: parseFloat(formData.get('purchaseAmount')),
+        remark: 'Purchase entry'
+    };
+    
+    fetch('/api/purchases', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('Purchase saved successfully!', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('purchaseEntryModal')).hide();
+            loadPurchases();
+            clearPurchaseForm();
+        } else {
+            showAlert(data.message || 'Failed to save purchase', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving purchase:', error);
+        showAlert('Error saving purchase', 'error');
+    });
+}
+
+function addSaleEntry() {
+    if (!currentPurchaseId) {
+        showAlert('Please select a purchase entry first!', 'warning');
+        return;
+    }
+    
+    // Get values from header fields
+    const partyCode = document.getElementById('salePartyCode').value;
+    const partyName = document.getElementById('salePartyName').value;
+    const bags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const weight = parseFloat(document.getElementById('saleWeight').value) || 0;
+    const rate = parseFloat(document.getElementById('saleRate').value) || 0;
+    const amount = bags * rate;
+    
+    // Validate required fields
+    if (!partyCode || !bags || !rate) {
+        showAlert('Please fill Party Code, Bags, and Rate!', 'warning');
+        return;
+    }
+    
+    // Check if sale bags exceed available balance
+    if (selectedPurchaseEntry) {
+        const totalBags = selectedPurchaseEntry.qty || 0;
+        const soldBags = selectedPurchaseEntry.sold_bags || 0;
+        const balance = totalBags - soldBags;
+        
+        // Calculate total bags already in sale entries
+        const totalSaleBags = saleEntries.reduce((sum, entry) => sum + entry.bags, 0);
+        const remainingBags = balance - totalSaleBags;
+        
+        if (bags > remainingBags) {
+            showAlert(`Cannot sell ${bags} bags. Only ${remainingBags} bags available!`, 'error');
+            return;
+        }
+    }
+    
+    // Add to sale entries array
+    const saleEntry = {
+        id: currentSaleEntryId++,
+        partyCode: partyCode,
+        partyName: partyName,
+        bags: bags,
+        weight: weight,
+        rate: rate,
+        amount: amount
+    };
+    
+    saleEntries.push(saleEntry);
+    displaySaleEntries();
+    
+    // Update real-time balance immediately
+    updateRealTimeSaleBalance();
+    
+    // Update live stats in header
+    updateLiveStats();
+    
+    // Clear header fields for next entry
+    clearHeaderFields();
+    
+    showAlert(`Sale entry ${saleEntry.id} added! Press Enter or click Add Entry for more.`, 'info');
+}
+
+function displaySaleEntries() {
+    const tbody = document.getElementById('saleEntriesTableBody');
+    tbody.innerHTML = '';
+    
+    saleEntries.forEach((entry, index) => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${entry.id}</td>
+            <td>
+                <input type="text" class="form-control form-control-sm" value="${entry.partyCode}" 
+                       onchange="updateSaleEntry(${entry.id}, 'partyCode', this.value)">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm" value="${entry.partyName}" 
+                       onchange="updateSaleEntry(${entry.id}, 'partyName', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.bags}" 
+                       onchange="updateSaleEntry(${entry.id}, 'bags', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.weight}" 
+                       onchange="updateSaleEntry(${entry.id}, 'weight', this.value)">
+            </td>
+            <td>
+                <input type="number" class="form-control form-control-sm" value="${entry.rate}" 
+                       onchange="updateSaleEntry(${entry.id}, 'rate', this.value)">
+            </td>
+            <td>${entry.amount.toFixed(2)}</td>
+            <td>
+                <button class="btn btn-sm btn-danger" onclick="removeSaleEntry(${entry.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+        
+        // Alternate row colors
+        if (index % 2 === 0) {
+            row.className = 'table-primary';
+        } else {
+            row.className = 'table-secondary';
+        }
+    });
+    
+    // Update real-time balance tracking
+    updateRealTimeBalance();
+}
+
+function updateSaleEntry(entryId, field, value) {
+    const entry = saleEntries.find(e => e.id === entryId);
+    if (entry) {
+        entry[field] = value;
+        
+        // Recalculate amount if bags or rate changed
+        if (field === 'bags' || field === 'rate') {
+            entry.amount = parseFloat(entry.bags || 0) * parseFloat(entry.rate || 0);
+        }
+        
+        displaySaleEntries();
+        updateRealTimeSaleBalance();
+        updateLiveStats();
+        showAlert(`Entry ${entryId} updated!`, 'info');
+    }
+}
+
+function removeSaleEntry(entryId) {
+    saleEntries = saleEntries.filter(entry => entry.id !== entryId);
+    displaySaleEntries();
+    updateRealTimeSaleBalance();
+    updateLiveStats();
+    showAlert('Sale entry removed!', 'info');
+}
+
+function updateRealTimeSaleBalance() {
+    if (!selectedPurchaseEntry) return;
+    
+    const totalBags = selectedPurchaseEntry.qty || 0;
+    const soldBags = selectedPurchaseEntry.sold_bags || 0;
+    const currentSaleBags = saleEntries.reduce((sum, entry) => sum + parseFloat(entry.bags || 0), 0);
+    
+    // Get current input values from sale form
+    const currentInputBags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const totalCurrentSale = currentSaleBags + currentInputBags;
+    
+    // Update the purchase table display with real-time data
+    const purchaseRows = document.querySelectorAll('#purchaseTableBody tr');
+    purchaseRows.forEach(row => {
+        const cells = row.cells;
+        const purchaseId = row.getAttribute('data-purchase-id');
+        
+        if (purchaseId && parseInt(purchaseId) === currentPurchaseId) {
+            // Update Sale and Balance columns for the selected purchase
+            const saleCell = cells[6]; // Sale column (adjusted for new party code column)
+            const balanceCell = cells[7]; // Balance column (adjusted for new party code column)
+            
+            if (saleCell && balanceCell) {
+                const totalSold = soldBags + totalCurrentSale;
+                const balance = totalBags - totalSold;
+                
+                // Update with live values
+                saleCell.textContent = totalSold;
+                balanceCell.textContent = balance;
+                
+                // Visual feedback for real-time updates
+                saleCell.style.backgroundColor = '#fff3cd';
+                balanceCell.style.backgroundColor = '#fff3cd';
+                
+                // Highlight negative balance
+                if (balance < 0) {
+                    balanceCell.style.color = 'red';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#f8d7da';
+                } else if (balance === 0) {
+                    balanceCell.style.color = 'orange';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#fff3cd';
+                } else {
+                    balanceCell.style.color = 'green';
+                    balanceCell.style.fontWeight = 'bold';
+                    balanceCell.style.backgroundColor = '#d4edda';
+                }
+                
+                // Remove highlight after 2 seconds
+                setTimeout(() => {
+                    saleCell.style.backgroundColor = '';
+                    balanceCell.style.backgroundColor = '';
+                }, 2000);
+            }
+        }
+    });
+    
+    // Update live stats in header
+    updateLiveStats();
+}
+
+function updateRealTimeBalance() {
+    if (!selectedPurchaseEntry) return;
+    
+    const totalBags = selectedPurchaseEntry.qty || 0;
+    const soldBags = selectedPurchaseEntry.sold_bags || 0;
+    const currentSaleBags = saleEntries.reduce((sum, entry) => sum + parseFloat(entry.bags || 0), 0);
+    
+    // Update the purchase table display with real-time data
+    const purchaseRows = document.querySelectorAll('#purchaseTableBody tr');
+    purchaseRows.forEach(row => {
+        const cells = row.cells;
+        const purchaseId = row.getAttribute('data-purchase-id');
+        
+        if (purchaseId && parseInt(purchaseId) === currentPurchaseId) {
+            // Update Sale and Balance columns for the selected purchase
+            const saleCell = cells[6]; // Sale column (adjusted for new party code column)
+            const balanceCell = cells[7]; // Balance column (adjusted for new party code column)
+            
+            if (saleCell && balanceCell) {
+                const totalSold = soldBags + currentSaleBags;
+                const balance = totalBags - totalSold;
+                
+                saleCell.textContent = totalSold;
+                balanceCell.textContent = balance;
+                
+                // Highlight negative balance
+                if (balance < 0) {
+                    balanceCell.style.color = 'red';
+                    balanceCell.style.fontWeight = 'bold';
+                } else {
+                    balanceCell.style.color = '';
+                    balanceCell.style.fontWeight = '';
+                }
+            }
+        }
+    });
+}
+
+function clearHeaderFields() {
+    document.getElementById('salePartyCode').value = '';
+    document.getElementById('salePartyName').value = '';
+    document.getElementById('saleBags').value = '';
+    document.getElementById('saleWeight').value = '';
+    document.getElementById('saleRate').value = '';
+    document.getElementById('saleAmount').value = '';
+    
+    // Clear real-time updates
+    updateRealTimeSaleBalance();
+}
+
+function saveAllSales() {
+    if (saleEntries.length === 0) {
+        showAlert('No sale entries to save!', 'warning');
+        return;
+    }
+    
+    if (!currentPurchaseId) {
+        showAlert('Please select a purchase entry first!', 'warning');
+        return;
+    }
+    
+    // Get header values
+    const billNo = parseInt(document.getElementById('saleBillNo').value);
+    const billDate = document.getElementById('saleDate').value;
+    
+    if (!billNo || !billDate) {
+        showAlert('Please fill Bill No and Date!', 'warning');
+        return;
+    }
+    
+    // Save all sale entries
+    let savedCount = 0;
+    let totalEntries = saleEntries.length;
+    
+    saleEntries.forEach((entry, index) => {
+        const data = {
+            purchase_id: currentPurchaseId,
+            bill_no: billNo,
+            bill_date: billDate,
+            party_cd: entry.partyCode,
+            it_cd: selectedPurchaseEntry ? selectedPurchaseEntry.it_cd : 'DEFAULT',
+            qty: entry.bags,
+            tot_smt: entry.weight,
+            rate: entry.rate,
+            sal_amt: entry.amount,
+            tot_amt: entry.amount,
+            remark: 'Sale entry'
+        };
+        
+        fetch('/api/sales', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            savedCount++;
+            
+            if (result.success) {
+                if (savedCount === totalEntries) {
+                    showAlert(`All ${totalEntries} sale entries saved successfully!`, 'success');
+                    loadPurchases(); // Refresh to update balances
+                    clearAllSaleData();
+                    
+                    // Auto-increment bill sequence
+                    const currentSeq = parseInt(document.getElementById('saleBillSequence').value);
+                    document.getElementById('saleBillSequence').value = currentSeq + 1;
+                }
+            } else {
+                showAlert(`Failed to save sale entry ${entry.id}: ${result.message}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error saving sale entry:', error);
+            showAlert(`Error saving sale entry ${entry.id}`, 'error');
+        });
+    });
+}
+
+function clearAllSaleData() {
+    saleEntries = [];
+    currentSaleEntryId = 1;
+    displaySaleEntries();
+    clearHeaderFields();
+    clearSaleForm();
+}
+
+function openSalePartySearch() {
+    searchParties('');
+}
+
+function openPurchasePartySearch() {
+    searchParties('');
+}
+
+function openItemSearch() {
+    searchItems('');
+}
+
+function searchParties(query) {
+    const filteredParties = parties.filter(party => 
+        party.party_cd.toLowerCase().includes(query.toLowerCase()) ||
+        party.party_nm.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    const tbody = document.getElementById('partySearchTableBody');
+    tbody.innerHTML = '';
+    
+    filteredParties.forEach(party => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td><strong>${party.party_cd}</strong></td>
+            <td><strong>${party.party_nm}</strong></td>
+            <td>${party.phone || '-'}</td>
+            <td>${party.place || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="selectParty('${party.party_cd}', '${party.party_nm}')">
+                    <i class="fas fa-check"></i> Select
+                </button>
+            </td>
+        `;
+        
+        // Add click functionality to the entire row for mobile
+        row.style.cursor = 'pointer';
+        row.addEventListener('click', function(e) {
+            // Don't trigger if clicking on the button
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                selectParty(party.party_cd, party.party_nm);
+            }
+        });
+        
+        // Add hover effect
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fa';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('partySearchModal'));
+    modal.show();
+    
+    // Ensure modal is properly positioned after showing
+    setTimeout(() => {
+        const modalElement = document.getElementById('partySearchModal');
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.margin = '5vh auto';
+            modalDialog.style.maxHeight = '90vh';
+            modalDialog.style.display = 'flex';
+            modalDialog.style.alignItems = 'center';
+            modalDialog.style.justifyContent = 'center';
+        }
+        
+        // Ensure modal content is properly sized
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.height = '90vh';
+        }
+        
+        // Ensure modal body is scrollable
+        const modalBody = modalElement.querySelector('.modal-body');
+        if (modalBody) {
+            modalBody.style.maxHeight = 'calc(90vh - 120px)';
+            modalBody.style.height = 'calc(90vh - 120px)';
+            modalBody.style.overflowY = 'auto';
+        }
+    }, 100);
+}
+
+function searchItems(query) {
+    const filteredItems = items.filter(item => 
+        item.it_cd.toLowerCase().includes(query.toLowerCase()) ||
+        item.it_nm.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    const tbody = document.getElementById('itemSearchTableBody');
+    tbody.innerHTML = '';
+    
+    filteredItems.forEach(item => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${item.it_cd}</td>
+            <td>${item.it_nm}</td>
+            <td>${item.category || '-'}</td>
+            <td>${item.rate || '-'}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="selectItem('${item.it_cd}', '${item.it_nm}', ${item.rate || 0})">
+                    Select
+                </button>
+            </td>
+        `;
+    });
+    
+    const modal = new bootstrap.Modal(document.getElementById('itemSearchModal'));
+    modal.show();
+    
+    // Ensure modal is properly positioned after showing
+    setTimeout(() => {
+        const modalElement = document.getElementById('itemSearchModal');
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.style.margin = '5vh auto';
+            modalDialog.style.maxHeight = '90vh';
+            modalDialog.style.display = 'flex';
+            modalDialog.style.alignItems = 'center';
+            modalDialog.style.justifyContent = 'center';
+        }
+        
+        // Ensure modal content is properly sized
+        const modalContent = modalElement.querySelector('.modal-content');
+        if (modalContent) {
+            modalContent.style.maxHeight = '90vh';
+            modalContent.style.height = '90vh';
+        }
+        
+        // Ensure modal body is scrollable
+        const modalBody = modalElement.querySelector('.modal-body');
+        if (modalBody) {
+            modalBody.style.maxHeight = 'calc(90vh - 120px)';
+            modalBody.style.height = 'calc(90vh - 120px)';
+            modalBody.style.overflowY = 'auto';
+        }
+    }, 100);
+}
+
+function selectParty(code, name) {
+    // Determine which form is active
+    const purchaseModal = document.getElementById('purchaseEntryModal');
+    const isPurchaseModalOpen = purchaseModal.classList.contains('show');
+    
+    if (isPurchaseModalOpen) {
+        document.getElementById('purchasePartyCode').value = code;
+        document.getElementById('purchasePartyName').value = name;
+    } else {
+        document.getElementById('salePartyCode').value = code;
+        document.getElementById('salePartyName').value = name;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('partySearchModal')).hide();
+}
+
+function selectItem(code, name, rate) {
+    document.getElementById('purchaseItemCode').value = code;
+    document.getElementById('purchaseItemName').value = name;
+    document.getElementById('purchaseRate').value = rate;
+    
+    bootstrap.Modal.getInstance(document.getElementById('itemSearchModal')).hide();
+    calculatePurchaseAmount();
+}
+
+function calculateSaleAmount() {
+    const bags = parseFloat(document.getElementById('saleBags').value) || 0;
+    const rate = parseFloat(document.getElementById('saleRate').value) || 0;
+    
+    // Calculate amount based on bags and rate (rate * bags)
+    const amount = bags * rate;
+    document.getElementById('saleAmount').value = amount.toFixed(2);
+}
+
+function calculatePurchaseAmount() {
+    const bags = parseFloat(document.getElementById('purchaseBags').value) || 0;
+    const weight = parseFloat(document.getElementById('purchaseWeight').value) || 0;
+    const rate = parseFloat(document.getElementById('purchaseRate').value) || 0;
+    
+    // Calculate amount based on weight and rate
+    const amount = weight * rate;
+    document.getElementById('purchaseAmount').value = amount.toFixed(2);
+}
+
+function clearSaleForm() {
+    // Clear header fields
+    document.getElementById('saleBillNo').value = '';
+    document.getElementById('saleDate').value = '';
+    document.getElementById('salePartyCode').value = '';
+    document.getElementById('salePartyName').value = '';
+    document.getElementById('saleBags').value = '';
+    document.getElementById('saleWeight').value = '';
+    document.getElementById('saleRate').value = '';
+    document.getElementById('saleAmount').value = '';
+    
+    // Clear sale entries
+    saleEntries = [];
+    currentSaleEntryId = 1;
+    displaySaleEntries();
+    
+    // Reset purchase selection
+    currentPurchaseId = null;
+    selectedPurchaseEntry = null;
+    
+    // Clear real-time updates
+    updateRealTimeSaleBalance();
+    
+    setCurrentDate();
+    document.getElementById('saleBillSequence').value = 1;
+}
+
+function clearPurchaseForm() {
+    document.getElementById('purchaseForm').reset();
+    setCurrentDate();
+    document.getElementById('purchasePartyName').value = '';
+    document.getElementById('purchaseItemName').value = '';
+    document.getElementById('purchaseAmount').value = '';
+}
+
+function refreshData() {
+    loadPurchases();
+    showAlert('Data refreshed!', 'info');
+}
+
+function showAlert(message, type) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+function setupMobileEnhancements() {
+    // Check if device is mobile
+    const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+        // Prevent zoom on input focus (iOS)
+        const inputs = document.querySelectorAll('input[type="text"], input[type="number"], input[type="date"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.style.fontSize = '16px';
+            });
+            
+            input.addEventListener('blur', function() {
+                this.style.fontSize = '';
+            });
+        });
+
+        // Add touch feedback for buttons
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('touchstart', function() {
+                this.style.transform = 'scale(0.98)';
+            });
+            
+            button.addEventListener('touchend', function() {
+                this.style.transform = '';
+            });
+        });
+
+        // Optimize table scrolling on mobile
+        const tables = document.querySelectorAll('.table-responsive');
+        tables.forEach(table => {
+            table.style.webkitOverflowScrolling = 'touch';
+        });
+
+        // Add swipe gestures for modals
+        setupModalSwipeGestures();
+        
+        // Optimize form layout for mobile
+        optimizeFormLayout();
+        
+        // Add mobile-specific keyboard shortcuts
+        setupMobileKeyboardShortcuts();
+}
+}
+
+function setupModalSwipeGestures() {
+    const modals = document.querySelectorAll('.modal');
+    modals.forEach(modal => {
+        let startY = 0;
+        let currentY = 0;
+        
+        modal.addEventListener('touchstart', function(e) {
+            startY = e.touches[0].clientY;
+        });
+        
+        modal.addEventListener('touchmove', function(e) {
+            currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            
+            if (diff > 50) {
+                // Swipe down to close modal
+                const modalInstance = bootstrap.Modal.getInstance(this);
+                if (modalInstance) {
+                    modalInstance.hide();
+}
+            }
+        });
+    });
+}
+
+function optimizeFormLayout() {
+    // Stack form fields vertically on mobile
+    const formRows = document.querySelectorAll('.row.g-3');
+    formRows.forEach(row => {
+        if (window.innerWidth <= 768) {
+            row.classList.add('flex-column');
+        }
+    });
+    
+    // Make input groups more mobile-friendly
+    const inputGroups = document.querySelectorAll('.input-group');
+    inputGroups.forEach(group => {
+        if (window.innerWidth <= 768) {
+            group.classList.add('flex-column');
+}
+    });
+}
+
+function setupMobileKeyboardShortcuts() {
+    // Add mobile-specific shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Volume buttons for navigation (if supported)
+        if (e.key === 'AudioVolumeUp') {
+            e.preventDefault();
+            // Navigate to previous field
+            const inputs = document.querySelectorAll('input, select, textarea');
+            const currentIndex = Array.from(inputs).indexOf(document.activeElement);
+            if (currentIndex > 0) {
+                inputs[currentIndex - 1].focus();
+}
+        }
+        
+        if (e.key === 'AudioVolumeDown') {
+            e.preventDefault();
+            // Navigate to next field
+            const inputs = document.querySelectorAll('input, select, textarea');
+            const currentIndex = Array.from(inputs).indexOf(document.activeElement);
+            if (currentIndex < inputs.length - 1) {
+                inputs[currentIndex + 1].focus();
+            }
+        }
+    });
+}
+
+// Handle orientation change
+window.addEventListener('orientationchange', function() {
+    setTimeout(() => {
+        // Re-optimize layout after orientation change
+        optimizeFormLayout();
+        
+        // Recalculate any dynamic sizing
+        const tables = document.querySelectorAll('.table-responsive');
+        tables.forEach(table => {
+            table.style.webkitOverflowScrolling = 'touch';
+        });
+    }, 100);
+});
+
+// Handle window resize for responsive behavior
+        window.addEventListener('resize', function() {
+            setTimeout(() => {
+                optimizeFormLayout();
+                
+                // Re-center modals on resize
+                const openModals = document.querySelectorAll('.modal.show');
+                openModals.forEach(modal => {
+                    const modalDialog = modal.querySelector('.modal-dialog');
+                    if (modalDialog && window.innerWidth <= 768) {
+                        modalDialog.style.position = 'fixed';
+                        modalDialog.style.top = '50%';
+                        modalDialog.style.left = '50%';
+                        modalDialog.style.transform = 'translate(-50%, -50%)';
+                        modalDialog.style.width = 'calc(100% - 1rem)';
+                        modalDialog.style.maxWidth = 'calc(100% - 1rem)';
+                    }
+                });
+            }, 100);
+        });
+</script>
+
+<style>
+/* Enhanced Card Styling */
+.enhanced-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.enhanced-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.enhanced-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+    font-weight: 600;
+}
+
+.enhanced-header h5 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+/* Enhanced Form Controls */
+.enhanced-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.enhanced-input {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #ffffff;
+    color: #333333;
+}
+
+.enhanced-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    background: #ffffff;
+    color: #333333;
+    transform: translateY(-2px);
+}
+
+.enhanced-input:read-only {
+    background: #f8f9fa;
+    color: #6c757d;
+    cursor: pointer;
+}
+
+.enhanced-input:read-only:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+}
+
+/* Amount Field Styling */
+.amount-field {
+    font-weight: 700;
+    text-align: right;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.amount-field:focus {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    color: #28a745;
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Enhanced Table Styling */
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #495057 0%, #6c757d 100%);
+    color: white;
+    border: none;
+    padding: 1rem 0.75rem;
+    font-weight: 600;
+    text-align: center;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    }
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.01);
+}
+
+.table tbody td {
+    padding: 0.75rem;
+    border-color: #e9ecef;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* Enhanced Button Styling */
+.btn {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+}
+
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+    color: white;
+}
+
+/* Enhanced Modal Styling */
+.enhanced-modal {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.enhanced-modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 1.5rem 2rem;
+    border-radius: 20px 20px 0 0;
+}
+
+.enhanced-modal-header .modal-title {
+    font-weight: 700;
+    font-size: 1.3rem;
+}
+
+.enhanced-modal-body {
+    padding: 2rem;
+    background: #ffffff;
+}
+
+.enhanced-modal-footer {
+    border-top: 1px solid #e9ecef;
+    padding: 1.5rem 2rem;
+    background: #f8f9fa;
+    border-radius: 0 0 20px 20px;
+}
+
+/* Modal Overlay and Centering Fixes */
+.modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    opacity: 0.3 !important;
+}
+
+.modal-backdrop.show {
+    opacity: 0.3 !important;
+}
+
+.modal-dialog {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: 100vh !important;
+    margin: 0 auto !important;
+    max-width: 90% !important;
+}
+
+.modal-content {
+    background: #ffffff !important;
+    border: none !important;
+    border-radius: 20px !important;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25) !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure body remains scrollable when modal is open */
+body.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
+
+/* Remove any additional overlays */
+.modal-backdrop + .modal-backdrop {
+    display: none !important;
+}
+
+/* Enhanced Search Input */
+.enhanced-search-input {
+    border: 3px solid #667eea;
+    border-radius: 25px;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    background: #ffffff;
+    color: #333333;
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+    transition: all 0.3s ease;
+}
+
+.enhanced-search-input:focus {
+    border-color: #764ba2;
+    box-shadow: 0 0 0 0.3rem rgba(102, 126, 234, 0.3);
+    background: #ffffff;
+    color: #333333;
+    transform: scale(1.02);
+}
+
+.enhanced-search-input::placeholder {
+    color: #6c757d;
+    font-weight: 400;
+}
+
+/* Shortcut Card Styling */
+.shortcut-card {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(23, 162, 184, 0.3);
+}
+
+.shortcut-item {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 8px;
+    border-radius: 5px;
+    margin: 0 2px;
+    font-weight: 600;
+}
+
+/* Selected Purchase Row Styling */
+.purchase-row-selected {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    color: white !important;
+    font-weight: bold !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.purchase-row-selected td {
+    border-color: #28a745 !important;
+}
+
+.purchase-row-selected .btn {
+    background: white !important;
+    color: #28a745 !important;
+    border-color: white !important;
+}
+
+/* Enhanced Mobile Responsive Design */
+@media (max-width: 768px) {
+    /* Container adjustments */
+    .container-fluid {
+        padding: 0.5rem;
+    }
+    
+    /* Header card mobile optimization */
+    .header-card {
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .header-content {
+        padding: 15px 10px;
+    }
+    
+    .brand-title {
+        font-size: 1.2rem;
+        margin-bottom: 5px;
+    }
+    
+    .brand-subtitle {
+        font-size: 0.7rem;
+    }
+    
+    .main-title h2 {
+        font-size: 1rem;
+    }
+    
+    .sub-title h4 {
+        font-size: 0.8rem;
+    }
+    
+    .time-display {
+        padding: 5px 10px;
+        border-radius: 8px;
+    }
+    
+    .time-value {
+        font-size: 0.9rem;
+    }
+    
+    .time-label {
+        font-size: 0.6rem;
+}
+
+    /* Enhanced cards mobile optimization */
+    .enhanced-card {
+        border-radius: 10px;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .enhanced-header {
+        padding: 1rem 0.75rem;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .enhanced-header h5 {
+        font-size: 1rem;
+        margin: 0;
+}
+
+    .enhanced-header .d-flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .enhanced-header .ms-auto {
+        margin-left: 0 !important;
+        display: flex;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    /* Form controls mobile optimization */
+    .enhanced-input {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding: 0.75rem 0.8rem;
+        border-radius: 8px;
+        height: auto;
+        min-height: 44px; /* Touch-friendly minimum height */
+    }
+    
+    .enhanced-label {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+    
+    /* Button mobile optimization */
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+        border-radius: 8px;
+        min-height: 44px; /* Touch-friendly minimum height */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.3rem;
+    }
+    
+    .btn-sm {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+        min-height: 38px;
+    }
+    
+    .btn-lg {
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        min-height: 50px;
+}
+
+    /* Table mobile optimization */
+    .table-responsive {
+        font-size: 0.8rem;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    /* Sale entry table horizontal scroll on mobile */
+    #saleEntriesTable {
+        min-width: 800px;
+    }
+    
+    /* Force horizontal scroll ONLY for sale entries table container */
+    .sale-entry-section .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+    
+    /* Add scroll indicator ONLY for sale entries table */
+    .sale-entry-section .table-responsive::after {
+        content: "← Scroll →";
+        position: absolute;
+        bottom: 5px;
+        right: 10px;
+        background: rgba(0,0,0,0.7);
+    color: white;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        pointer-events: none;
+        opacity: 0.8;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    text-align: center;
+}
+
+    .table tbody td {
+        padding: 0.6rem 0.4rem;
+        font-size: 0.8rem;
+    vertical-align: middle;
+        white-space: nowrap;
+    }
+    
+    /* Mobile table cell optimization */
+    .table th,
+    .table td {
+        min-width: 60px;
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Hide less important columns on mobile */
+    .table th:nth-child(3),
+    .table td:nth-child(3),
+    .table th:nth-child(9),
+    .table td:nth-child(9) {
+        display: none;
+    }
+    
+    /* Show Bags column in purchase table on mobile */
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+        display: table-cell !important;
+    }
+    
+    /* Mobile purchase table - show only essential columns */
+    .table th:nth-child(1), /* S.No. */
+    .table td:nth-child(1),
+    .table th:nth-child(4), /* Party Name */
+    .table td:nth-child(4),
+    .table th:nth-child(6), /* Bags */
+    .table td:nth-child(6),
+    .table th:nth-child(7), /* Sale */
+    .table td:nth-child(7),
+    .table th:nth-child(8) { /* Balance */
+        display: table-cell !important;
+    }
+    
+    /* Hide Item column (column 5) in mobile view */
+    .table th:nth-child(5),
+    .table td:nth-child(5),
+    #purchaseTable th:nth-child(5),
+    #purchaseTable td:nth-child(5) {
+        display: none !important;
+    }
+    
+    /* Modal mobile optimization */
+    .enhanced-modal {
+        border-radius: 15px;
+        margin: 0.5rem;
+    }
+    
+    .enhanced-modal-header {
+        padding: 1rem;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    .enhanced-modal-header .modal-title {
+        font-size: 1.1rem;
+    }
+    
+    .enhanced-modal-body {
+        padding: 1rem;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    .enhanced-modal-footer {
+        padding: 1rem;
+        border-radius: 0 0 15px 15px;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .enhanced-modal-footer .btn {
+        width: 100%;
+        margin: 0;
+    }
+    
+    /* Mobile modal centering */
+    .modal-dialog {
+        margin: 0.5rem auto !important;
+        max-width: calc(100% - 1rem) !important;
+        min-height: auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        position: fixed !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+    }
+    
+    .modal-content {
+        max-height: 85vh !important;
+        width: 100% !important;
+    }
+    
+    /* Mobile modal backdrop */
+    .modal-backdrop {
+        opacity: 0.2 !important;
+    }
+    
+    /* Mobile table row touch optimization */
+    .table tbody tr {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8f9fa !important;
+    }
+    
+    .table tbody tr:active {
+        background-color: #e9ecef !important;
+    }
+    
+    /* Party search modal mobile optimization */
+    .modal-body table th:nth-child(3),
+    .modal-body table td:nth-child(3),
+    .modal-body table th:nth-child(4),
+    .modal-body table td:nth-child(4) {
+        display: none;
+    }
+    
+    /* Mobile party search table styling */
+    .modal-body table td:nth-child(2) {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    /* Ensure Party Name column is visible and properly labeled in mobile */
+    .modal-body table th:nth-child(2) {
+        display: table-cell !important;
+    }
+    
+    .modal-body table td:nth-child(2) {
+        display: table-cell !important;
+    }
+    
+    .modal-body table td:nth-child(1) {
+    font-weight: 500;
+        color: #6c757d;
+    }
+    
+    /* Search input mobile optimization */
+    .enhanced-search-input {
+        font-size: 16px;
+        padding: 0.75rem 1rem;
+        border-radius: 20px;
+        min-height: 44px;
+}
+
+    /* Grid system mobile optimization */
+    .row.g-3 {
+        --bs-gutter-x: 0.75rem;
+        --bs-gutter-y: 0.75rem;
+}
+
+    .col-md-1,
+    .col-md-2,
+    .col-md-3 {
+        margin-bottom: 0.75rem;
+}
+
+    /* Form row mobile optimization */
+    .row.g-3.mb-3 {
+        margin-bottom: 1rem !important;
+}
+
+    /* Input groups mobile optimization */
+    .input-group {
+        flex-direction: column;
+        gap: 0.5rem;
+}
+
+    .input-group .form-control {
+    border-radius: 8px;
+        margin-bottom: 0;
+}
+
+    .input-group .btn {
+        border-radius: 8px;
+        width: 100%;
+}
+
+    /* Shortcut card mobile optimization */
+    .shortcut-card {
+    border-radius: 10px;
+        margin-top: 1rem;
+    }
+    
+    .shortcut-card .card-body {
+        padding: 0.75rem;
+    }
+    
+    .shortcut-item {
+        padding: 1px 4px;
+        font-size: 0.7rem;
+        margin: 0 1px;
+}
+
+        /* Action buttons mobile optimization */
+    .row.mt-3 .col-12 {
+    display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .row.mt-3 .btn {
+        width: 100%;
+        margin: 0;
+    }
+}
+
+/* Extra Small Mobile Devices */
+@media (max-width: 576px) {
+    .container-fluid {
+        padding: 0.25rem;
+    }
+    
+    .header-content {
+        padding: 10px 8px;
+    }
+    
+    .brand-title {
+        font-size: 1rem;
+}
+
+    .brand-subtitle {
+        font-size: 0.6rem;
+    }
+    
+    .main-title h2 {
+        font-size: 0.9rem;
+    }
+    
+    .sub-title h4 {
+        font-size: 0.7rem;
+    }
+    
+    .enhanced-header {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .enhanced-header h5 {
+        font-size: 0.9rem;
+    }
+    
+    .enhanced-input {
+        font-size: 16px;
+        padding: 0.6rem 0.7rem;
+        min-height: 40px;
+    }
+    
+    .btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.85rem;
+        min-height: 40px;
+    }
+    
+    .table thead th {
+        padding: 0.5rem 0.3rem;
+        font-size: 0.7rem;
+}
+
+    .table tbody td {
+        padding: 0.4rem 0.2rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Hide more columns on very small screens */
+    .table th:nth-child(2),
+    .table td:nth-child(2),
+    .table th:nth-child(6),
+    .table td:nth-child(6) {
+        display: none;
+    }
+    
+    .enhanced-modal {
+        margin: 0.5rem;
+    }
+    
+    .enhanced-modal-body {
+        padding: 0.75rem;
+    }
+    
+    .enhanced-search-input {
+        font-size: 16px;
+        padding: 0.6rem 0.8rem;
+        min-height: 40px;
+    }
+}
+
+/* Landscape Mobile Optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+    .header-card {
+        margin-bottom: 0.5rem;
+    }
+    
+    .header-content {
+        padding: 10px 15px;
+}
+
+    .enhanced-modal-body {
+        max-height: 60vh;
+    }
+    
+    .table-responsive {
+        max-height: 40vh;
+    overflow-y: auto;
+}
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover {
+        transform: none;
+    }
+    
+    .enhanced-card:hover {
+        transform: none;
+    }
+    
+    .table tbody tr:hover {
+        transform: none;
+    }
+    
+    /* Increase touch targets */
+    .btn {
+        min-height: 48px;
+    }
+    
+    .enhanced-input {
+        min-height: 48px;
+    }
+    
+    /* Add touch feedback */
+    .btn:active {
+        transform: scale(0.98);
+    }
+    
+    .enhanced-input:focus {
+        transform: none;
+    }
+}
+
+/* High DPI Mobile Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .enhanced-input {
+        border-width: 1px;
+    }
+    
+    .table {
+        border-width: 1px;
+    }
+}
+
+/* Mobile Header Layout Adjustments */
+@media (max-width: 768px) {
+    .header-content .row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .header-content .col-md-3,
+    .header-content .col-md-6 {
+        text-align: center !important;
+    }
+    
+    .time-section {
+        align-items: center;
+        flex-direction: row;
+        justify-content: center;
+        gap: 10px;
+    }
+    
+    .close-button {
+        margin-top: 0;
+    }
+    
+    /* Mobile-specific header layout */
+    .brand-section {
+        order: 1;
+    }
+    
+    .title-section {
+        order: 2;
+    }
+    
+    .time-section {
+        order: 3;
+    }
+}
+
+/* Additional Mobile Optimizations */
+@media (max-width: 768px) {
+    /* Prevent horizontal scrolling */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Optimize touch targets */
+    .btn, .form-control, .form-select {
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+    
+    /* Improve table readability on mobile */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+    }
+    
+    /* Custom scrollbar for mobile */
+    .table-responsive::-webkit-scrollbar {
+        height: 4px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+    
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 2px;
+    }
+    
+    /* Improve modal touch interaction */
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+    
+    /* Better form spacing on mobile */
+    .form-label {
+        margin-bottom: 0.3rem;
+    }
+    
+    /* Optimize button spacing */
+    .btn + .btn {
+        margin-left: 0;
+        margin-top: 0.5rem;
+    }
+    
+    /* Improve input group layout */
+    .input-group > .form-control {
+        border-radius: 8px !important;
+    }
+    
+    .input-group > .btn {
+        border-radius: 8px !important;
+        margin-top: 0.5rem;
+    }
+}
+
+/* Mobile-specific animations */
+@media (max-width: 768px) {
+    .enhanced-card {
+        animation: none;
+    }
+    
+    .enhanced-card:hover {
+        transform: none;
+    }
+    
+    /* Reduce motion for better mobile performance */
+    * {
+        animation-duration: 0.1s !important;
+        transition-duration: 0.1s !important;
+    }
+}
+
+/* Mobile keyboard optimizations */
+@media (max-width: 768px) {
+    /* Ensure inputs don't zoom on focus */
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="email"],
+    input[type="tel"],
+    select,
+    textarea {
+        font-size: 16px !important;
+    }
+    
+    /* Improve focus states for touch devices */
+    .form-control:focus,
+    .form-select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+}
+
+/* Mobile-specific alert positioning */
+@media (max-width: 768px) {
+    .alert.position-fixed {
+        top: 10px !important;
+        right: 10px !important;
+        left: 10px !important;
+        min-width: auto !important;
+        max-width: calc(100% - 20px) !important;
+    }
+}
+
+/* Animation Effects */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    }
+    
+.enhanced-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+/* Loading States */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+}
+
+.alert-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+    }
+    
+.alert-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    }
+
+/* Enhanced Header Styling */
+    .header-card {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 50%, #2c3e50 100%);
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        border: 1px solid rgba(255,255,255,0.1);
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .header-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+    }
+    
+    .header-content {
+        padding: 20px 25px;
+        position: relative;
+        z-index: 1;
+    }
+    
+    .brand-section {
+        color: white;
+    }
+    
+    .brand-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        background: linear-gradient(45deg, #ffffff, #e8f4fd);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .brand-subtitle {
+        font-size: 0.9rem;
+        margin: 5px 0 0 0;
+        color: #bdc3c7;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .title-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .main-title {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        padding: 8px 20px;
+        border-radius: 25px;
+        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+    
+    .main-title:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+    }
+    
+    .main-title h2 {
+        color: white;
+        font-size: 1.4rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .sub-title {
+        background: linear-gradient(135deg, #1abc9c 0%, #16a085 100%);
+        padding: 6px 16px;
+        border-radius: 20px;
+        box-shadow: 0 3px 12px rgba(26, 188, 156, 0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+        transform: translateY(0);
+        transition: all 0.3s ease;
+    }
+    
+    .sub-title:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(26, 188, 156, 0.5);
+    }
+    
+    .sub-title h4 {
+        color: white;
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .time-section {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 10px;
+    }
+    
+    .time-display {
+        text-align: center;
+        background: rgba(255,255,255,0.1);
+        padding: 8px 15px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(10px);
+    }
+    
+    .time-label {
+        display: block;
+        font-size: 0.75rem;
+        color: #bdc3c7;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+    
+    .time-value {
+        display: block;
+        font-size: 1.2rem;
+        color: white;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    
+    .close-button {
+        margin-top: 5px;
+    }
+    
+    .btn-close-custom {
+        background: rgba(231, 76, 60, 0.9);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: white;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+    }
+    
+    .btn-close-custom:hover {
+        background: rgba(231, 76, 60, 1);
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4);
+    }
+    
+    /* Mobile Responsive Header */
+    @media (max-width: 768px) {
+        .header-card {
+            border-radius: 10px;
+            margin: 0 -10px;
+        }
+        
+        .header-content {
+            padding: 15px 20px;
+        }
+        
+        .brand-title {
+            font-size: 1.4rem;
+        }
+        
+        .brand-subtitle {
+            font-size: 0.8rem;
+        }
+        
+        .main-title {
+            padding: 6px 15px;
+            border-radius: 20px;
+        }
+        
+        .main-title h2 {
+            font-size: 1.1rem;
+        }
+        
+        .sub-title {
+            padding: 4px 12px;
+            border-radius: 15px;
+        }
+        
+        .sub-title h4 {
+            font-size: 0.9rem;
+        }
+        
+        .time-display {
+            padding: 6px 12px;
+            border-radius: 10px;
+        }
+        
+        .time-value {
+            font-size: 1rem;
+        }
+        
+        .btn-close-custom {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+        }
+    }
+    
+    /* Extra Small Mobile Devices */
+    @media (max-width: 576px) {
+        .header-content {
+            padding: 12px 15px;
+        }
+        
+        .brand-title {
+            font-size: 1.2rem;
+        }
+        
+        .brand-subtitle {
+            font-size: 0.7rem;
+        }
+        
+        .main-title {
+            padding: 5px 12px;
+        }
+        
+        .main-title h2 {
+            font-size: 1rem;
+        }
+        
+        .sub-title {
+            padding: 3px 10px;
+        }
+        
+        .sub-title h4 {
+            font-size: 0.8rem;
+        }
+        
+        .time-display {
+            padding: 5px 10px;
+        }
+        
+        .time-value {
+            font-size: 0.9rem;
+        }
+        
+        .time-label {
+            font-size: 0.65rem;
+        }
+    }
+    
+    /* Mobile Header Layout Adjustments */
+    @media (max-width: 768px) {
+        .header-content .row {
+            flex-direction: column;
+        }
+        
+        /* Mobile Stats Optimization */
+        .card-body.p-4 {
+            padding: 1rem !important;
+        }
+        
+        .stats-item h4 {
+            font-size: 1.5rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        .stats-item p {
+            font-size: 0.8rem !important;
+            margin-bottom: 0 !important;
+        }
+        
+        /* Ensure stats are side by side on mobile */
+        .col-4 {
+            flex: 0 0 33.333333%;
+            max-width: 33.333333%;
+            padding: 0 0.25rem;
+        }
+        
+        /* Compact header for mobile */
+        .card-body .row.align-items-center {
+            align-items: center !important;
+        }
+        
+        .card-body .col-md-4:first-child {
+            margin-bottom: 0.5rem;
+        }
+        
+        .card-body .col-md-8 {
+            margin-top: 0.5rem;
+        }
+        
+        /* Mobile gradient header optimization */
+        .card[style*="linear-gradient"],
+        .card[style*="667eea"],
+        .card[style*="764ba2"],
+        .row.mb-4 .col-12 .card {
+            margin-bottom: 1rem;
+        }
+        
+        .card[style*="linear-gradient"] .card-body,
+        .card[style*="667eea"] .card-body,
+        .card[style*="764ba2"] .card-body,
+        .row.mb-4 .col-12 .card .card-body {
+            padding: 1rem !important;
+        }
+        
+        .card[style*="linear-gradient"] .row,
+        .card[style*="667eea"] .row,
+        .card[style*="764ba2"] .row,
+        .row.mb-4 .col-12 .card .row {
+            margin: 0;
+        }
+        
+        .card[style*="linear-gradient"] .col-md-4,
+        .card[style*="linear-gradient"] .col-4,
+        .card[style*="667eea"] .col-md-4,
+        .card[style*="667eea"] .col-4,
+        .card[style*="764ba2"] .col-md-4,
+        .card[style*="764ba2"] .col-4,
+        .row.mb-4 .col-12 .card .col-md-4,
+        .row.mb-4 .col-12 .card .col-4 {
+            padding: 0 0.25rem;
+        }
+        
+        /* Enhanced Sticky Header for Mobile */
+        .fixed-header-card {
+            position: sticky !important;
+            top: 0 !important;
+            z-index: 9999 !important;
+            margin-bottom: 1rem !important;
+            /* Force sticky behavior */
+            -webkit-position: sticky !important;
+            -webkit-top: 0 !important;
+            /* Ensure it works on all browsers */
+            position: -webkit-sticky !important;
+            position: sticky !important;
+        }
+        
+        /* Alternative approach for browsers that don't support sticky */
+        @supports not (position: sticky) {
+            .fixed-header-card {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+                right: 0 !important;
+                z-index: 9999 !important;
+            }
+        }
+        
+        /* Normal content spacing for sticky header */
+        .content-area {
+            padding-top: 1rem !important;
+        }
+        
+        /* Ensure the header doesn't interfere with other elements */
+        .card[style*="linear-gradient"] + * {
+            margin-top: 0 !important;
+        }
+        
+        /* Enhanced fixed header behavior for better mobile experience */
+        .card[style*="linear-gradient"] {
+            /* Force hardware acceleration for smooth scrolling */
+            -webkit-transform: translate3d(0, 0, 0) !important;
+            transform: translate3d(0, 0, 0) !important;
+            /* Ensure proper stacking context */
+            isolation: isolate !important;
+            /* Force it to stay visible */
+            visibility: visible !important;
+            opacity: 1 !important;
+            display: block !important;
+        }
+        
+        /* Ensure proper scroll behavior */
+        html, body {
+            scroll-behavior: smooth !important;
+        }
+        
+        /* Optimize for mobile scrolling performance */
+        .main-content {
+            -webkit-overflow-scrolling: touch !important;
+        }
+        
+        /* Smooth transition when header becomes sticky */
+        .card[style*="linear-gradient"] {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+        
+        /* Enhanced shadow when sticky */
+        .card[style*="linear-gradient"]:is(:hover, :focus-within) {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+        }
+        
+        /* Mobile body adjustments for fixed header */
+        body {
+            padding-top: 0 !important;
+        }
+        
+        /* Ensure proper spacing for mobile */
+        .main-content {
+            padding-top: 0 !important;
+        }
+        
+        /* Optimize fixed header height for mobile */
+        .card[style*="linear-gradient"] .card-body {
+            padding: 0.75rem 1rem !important;
+            min-height: auto !important;
+        }
+        
+        /* Ensure stats remain visible in fixed header */
+        .stats-item {
+            text-align: center !important;
+        }
+        
+        /* Ensure header is visible */
+        .fixed-header-card {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        .stats-item h4 {
+            font-size: 1.3rem !important;
+            margin-bottom: 0.2rem !important;
+        }
+        
+        .stats-item p {
+            font-size: 0.7rem !important;
+            margin-bottom: 0 !important;
+        }
+        
+        .header-content .col-md-3,
+        .header-content .col-md-6 {
+            text-align: center !important;
+        }
+        
+        .time-section {
+            align-items: center;
+            flex-direction: row;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .close-button {
+            margin-top: 0;
+        }
+    }
+</style>
+
+<script>
+    // Ensure header is sticky on mobile
+    function ensureHeaderVisibility() {
+        const header = document.querySelector('.fixed-header-card');
+        if (header) {
+            console.log('Found header, making it sticky');
+            header.style.display = 'block';
+            header.style.visibility = 'visible';
+            header.style.opacity = '1';
+            header.style.position = 'sticky';
+            header.style.top = '0';
+            header.style.zIndex = '9999';
+            header.style.webkitPosition = 'sticky';
+            header.style.webkitTop = '0';
+            
+            // Force reflow to ensure sticky works
+            header.offsetHeight;
+        } else {
+            console.log('Header not found');
+        }
+    }
+    
+    // Also handle scroll events to ensure sticky behavior
+    function handleScroll() {
+        const header = document.querySelector('.fixed-header-card');
+        if (header && window.scrollY > 0) {
+            header.style.position = 'fixed';
+            header.style.top = '0';
+            header.style.left = '0';
+            header.style.right = '0';
+            header.style.zIndex = '9999';
+        } else if (header) {
+            header.style.position = 'sticky';
+            header.style.top = '0';
+        }
+    }
+    
+            // Run on page load
+        document.addEventListener('DOMContentLoaded', ensureHeaderVisibility);
+        
+        // Run once after a short delay to ensure it's applied
+        setTimeout(ensureHeaderVisibility, 100);
+        
+        // Add scroll event listener
+        window.addEventListener('scroll', handleScroll);
+        
+        // Also run on resize
+        window.addEventListener('resize', ensureHeaderVisibility);
+</script>
+{% endblock %} 

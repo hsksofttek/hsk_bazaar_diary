@@ -1,0 +1,41 @@
+# Core Flask Framework and Extensions
+--only-binary=:all:
+Flask==2.3.3
+Flask-SQLAlchemy>=3.0.0
+Flask-Login==0.6.3
+Flask-WTF==1.1.1
+WTForms==3.0.1
+Werkzeug==2.3.7
+flask_migrate
+flask_cors
+jwt
+psutil
+email-validator>=2.0.0
+
+
+# Database and ORM
+SQLAlchemy>=2.0.31
+Jinja2==3.1.2
+
+# Security and Utilities
+MarkupSafe>=3.0.0
+itsdangerous==2.1.2
+click==8.1.7
+blinker==1.6.3
+python-dotenv==1.0.0
+
+# Legacy Data Import and Analysis
+dbfread==2.0.7
+dbfpy3>=3.0.0
+
+# HTTP Requests (for API testing)
+requests==2.31.0
+
+# Data Processing and Export
+pandas>=2.0.0
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# Data Visualization (for reports)
+matplotlib>=3.0.0
+seaborn==0.12.2

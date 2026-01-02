@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Financial Management - Bazar Software</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-bg: #ecf0f1;
+            --dark-bg: #34495e;
+        }
+        
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .card-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card.success {
+            background: linear-gradient(135deg, var(--success-color), #2ecc71);
+        }
+        
+        .stats-card.warning {
+            background: linear-gradient(135deg, var(--warning-color), #f1c40f);
+        }
+        
+        .stats-card.danger {
+            background: linear-gradient(135deg, var(--danger-color), #c0392b);
+        }
+        
+        .stats-card.info {
+            background: linear-gradient(135deg, var(--secondary-color), #3498db);
+        }
+        
+        .table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .table thead th {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .nav-tabs {
+            border: none;
+            background: white;
+            border-radius: 10px;
+            padding: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            border-radius: 8px;
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 12px 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+        
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+        }
+        
+        .badge {
+            border-radius: 20px;
+            padding: 8px 15px;
+            font-weight: 600;
+        }
+        
+        .debit {
+            color: var(--danger-color);
+            font-weight: 600;
+        }
+        
+        .credit {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                Advanced Financial Management
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/dashboard">
+                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="/logout">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-2">
+                <div class="stats-card success">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalAssets">₹0</h4>
+                            <p class="mb-0">Total Assets</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-building fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card danger">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalLiabilities">₹0</h4>
+                            <p class="mb-0">Total Liabilities</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-hand-holding-usd fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card info">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalEquity">₹0</h4>
+                            <p class="mb-0">Total Equity</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-balance-scale fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card success">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalRevenue">₹0</h4>
+                            <p class="mb-0">Total Revenue</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-up fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card warning">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="totalExpenses">₹0</h4>
+                            <p class="mb-0">Total Expenses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-down fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="stats-card" id="profitCard">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 id="netProfit">₹0</h4>
+                            <p class="mb-0">Net Profit</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-pie fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <ul class="nav nav-tabs card-header-tabs" id="financialTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="accounts-tab" data-bs-toggle="tab" data-bs-target="#accounts" type="button" role="tab">
+                                    <i class="fas fa-list me-2"></i>Chart of Accounts
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="journal-entry-tab" data-bs-toggle="tab" data-bs-target="#journal-entry" type="button" role="tab">
+                                    <i class="fas fa-plus-circle me-2"></i>Journal Entry
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="ledger-tab" data-bs-toggle="tab" data-bs-target="#ledger" type="button" role="tab">
+                                    <i class="fas fa-book me-2"></i>General Ledger
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="trial-balance-tab" data-bs-toggle="tab" data-bs-target="#trial-balance" type="button" role="tab">
+                                    <i class="fas fa-balance-scale me-2"></i>Trial Balance
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="balance-sheet-tab" data-bs-toggle="tab" data-bs-target="#balance-sheet" type="button" role="tab">
+                                    <i class="fas fa-file-invoice-dollar me-2"></i>Balance Sheet
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="profit-loss-tab" data-bs-toggle="tab" data-bs-target="#profit-loss" type="button" role="tab">
+                                    <i class="fas fa-chart-line me-2"></i>Profit & Loss
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card-body">
+                        <div class="tab-content" id="financialTabsContent">
+                            <!-- Chart of Accounts Tab -->
+                            <div class="tab-pane fade show active" id="accounts" role="tabpanel">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <select class="form-select" id="filterAccountType">
+                                                <option value="">All Account Types</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-primary" onclick="loadAccounts()">
+                                                <i class="fas fa-search me-2"></i>Filter
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-success" onclick="showAddAccountForm()">
+                                        <i class="fas fa-plus me-2"></i>Add Account
+                                    </button>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Account Code</th>
+                                                <th>Account Name</th>
+                                                <th>Type</th>
+                                                <th>Opening Balance</th>
+                                                <th>Current Balance</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="accountsListBody">
+                                            <tr>
+                                                <td colspan="7" class="text-center">Loading accounts...</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Journal Entry Tab -->
+                            <div class="tab-pane fade" id="journal-entry" role="tabpanel">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <form id="journalEntryForm">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Entry Date *</label>
+                                                        <input type="date" class="form-control" id="entryDate" required>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Narration</label>
+                                                        <input type="text" class="form-control" id="entryNarration" placeholder="Brief description">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Journal Entry Details *</label>
+                                                <div id="entryDetails">
+                                                    <div class="row mb-2">
+                                                        <div class="col-md-4">
+                                                            <select class="form-select" name="account_code" required>
+                                                                <option value="">Select Account</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <input type="number" class="form-control" name="debit_amount" step="0.01" min="0" placeholder="Debit">
+                                                        </div>
+                                                        <div class="col-md-3">
+                                                            <input type="number" class="form-control" name="credit_amount" step="0.01" min="0" placeholder="Credit">
+                                                        </div>
+                                                        <div class="col-md-2">
+                                                            <button type="button" class="btn btn-danger btn-sm" onclick="removeEntryDetail(this)">
+                                                                <i class="fas fa-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <button type="button" class="btn btn-secondary btn-sm" onclick="addEntryDetail()">
+                                                    <i class="fas fa-plus me-2"></i>Add Entry
+                                                </button>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <button type="button" class="btn btn-secondary" onclick="calculateTotals()">
+                                                    <i class="fas fa-calculator me-2"></i>Calculate
+                                                </button>
+                                                <button type="submit" class="btn btn-success">
+                                                    <i class="fas fa-save me-2"></i>Post Entry
+                                                </button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6 class="mb-0"><i class="fas fa-calculator me-2"></i>Totals</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="row mb-2">
+                                                    <div class="col-6">Total Debit:</div>
+                                                    <div class="col-6 text-end debit" id="totalDebit">₹0.00</div>
+                                                </div>
+                                                <div class="row mb-2">
+                                                    <div class="col-6">Total Credit:</div>
+                                                    <div class="col-6 text-end credit" id="totalCredit">₹0.00</div>
+                                                </div>
+                                                <hr>
+                                                <div class="row mb-2">
+                                                    <div class="col-6"><strong>Difference:</strong></div>
+                                                    <div class="col-6 text-end"><strong id="difference">₹0.00</strong></div>
+                                                </div>
+                                                <div class="alert alert-info" id="balanceStatus">
+                                                    <i class="fas fa-info-circle me-2"></i>Ready to post
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- General Ledger Tab -->
+                            <div class="tab-pane fade" id="ledger" role="tabpanel">
+                                <div class="d-flex justify-content-between mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-md-3">
+                                            <select class="form-select" id="filterLedgerAccount">
+                                                <option value="">All Accounts</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="ledgerStartDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="ledgerEndDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <button class="btn btn-primary" onclick="loadLedger()">
+                                                <i class="fas fa-search me-2"></i>Load Ledger
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Voucher No</th>
+                                                <th>Account</th>
+                                                <th>Debit</th>
+                                                <th>Credit</th>
+                                                <th>Balance</th>
+                                                <th>Narration</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="ledgerListBody">
+                                            <tr>
+                                                <td colspan="7" class="text-center">Select filters and load ledger</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Trial Balance Tab -->
+                            <div class="tab-pane fade" id="trial-balance" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-balance-scale fa-3x text-muted mb-3"></i>
+                                    <h5>Trial Balance</h5>
+                                    <p class="text-muted">Generate trial balance as of a specific date</p>
+                                    <div class="row g-3 justify-content-center">
+                                        <div class="col-md-4">
+                                            <input type="date" class="form-control" id="trialBalanceDate">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-primary" onclick="generateTrialBalance()">
+                                                <i class="fas fa-calculator me-2"></i>Generate Trial Balance
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Balance Sheet Tab -->
+                            <div class="tab-pane fade" id="balance-sheet" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-file-invoice-dollar fa-3x text-muted mb-3"></i>
+                                    <h5>Balance Sheet</h5>
+                                    <p class="text-muted">Generate balance sheet as of a specific date</p>
+                                    <div class="row g-3 justify-content-center">
+                                        <div class="col-md-4">
+                                            <input type="date" class="form-control" id="balanceSheetDate">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-success" onclick="generateBalanceSheet()">
+                                                <i class="fas fa-chart-bar me-2"></i>Generate Balance Sheet
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Profit & Loss Tab -->
+                            <div class="tab-pane fade" id="profit-loss" role="tabpanel">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                                    <h5>Profit & Loss Statement</h5>
+                                    <p class="text-muted">Generate profit and loss statement for a period</p>
+                                    <div class="row g-3 justify-content-center">
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="plStartDate">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="date" class="form-control" id="plEndDate">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button class="btn btn-warning" onclick="generateProfitLoss()">
+                                                <i class="fas fa-chart-pie me-2"></i>Generate P&L
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success/Error Alerts -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+        <div id="alertContainer"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let accountsData = [];
+        let accountTypes = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStatistics();
+            loadAccounts();
+            loadAccountTypes();
+            setDefaultDates();
+        });
+
+        // Set default dates
+        function setDefaultDates() {
+            const today = new Date();
+            document.getElementById('entryDate').value = today.toISOString().split('T')[0];
+            document.getElementById('trialBalanceDate').value = today.toISOString().split('T')[0];
+            document.getElementById('balanceSheetDate').value = today.toISOString().split('T')[0];
+            
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            document.getElementById('plStartDate').value = firstDay.toISOString().split('T')[0];
+            document.getElementById('plEndDate').value = today.toISOString().split('T')[0];
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/financial/statistics');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const stats = data.statistics;
+                    document.getElementById('totalAssets').textContent = '₹' + stats.total_assets.toLocaleString();
+                    document.getElementById('totalLiabilities').textContent = '₹' + stats.total_liabilities.toLocaleString();
+                    document.getElementById('totalEquity').textContent = '₹' + stats.total_equity.toLocaleString();
+                    document.getElementById('totalRevenue').textContent = '₹' + stats.total_revenue.toLocaleString();
+                    document.getElementById('totalExpenses').textContent = '₹' + stats.total_expenses.toLocaleString();
+                    document.getElementById('netProfit').textContent = '₹' + stats.net_profit.toLocaleString();
+                    
+                    // Update profit card color
+                    const profitCard = document.getElementById('profitCard');
+                    if (stats.net_profit > 0) {
+                        profitCard.className = 'stats-card success';
+                    } else if (stats.net_profit < 0) {
+                        profitCard.className = 'stats-card danger';
+                    } else {
+                        profitCard.className = 'stats-card warning';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+                showAlert('Error loading statistics', 'danger');
+            }
+        }
+
+        // Load accounts
+        async function loadAccounts() {
+            try {
+                const accountType = document.getElementById('filterAccountType').value;
+                const params = new URLSearchParams();
+                
+                if (accountType) params.append('account_type', accountType);
+                
+                const response = await fetch(`/api/financial/accounts?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    accountsData = data.accounts;
+                    displayAccounts();
+                    populateAccountDropdowns();
+                } else {
+                    showAlert('Error loading accounts', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading accounts:', error);
+                showAlert('Error loading accounts', 'danger');
+            }
+        }
+
+        // Load account types
+        async function loadAccountTypes() {
+            try {
+                const response = await fetch('/api/financial/account-types');
+                const data = await response.json();
+                
+                if (data.success) {
+                    accountTypes = data.account_types;
+                    
+                    // Populate filter dropdown
+                    const filterDropdown = document.getElementById('filterAccountType');
+                    accountTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.code;
+                        option.textContent = type.name;
+                        filterDropdown.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading account types:', error);
+            }
+        }
+
+        // Display accounts
+        function displayAccounts() {
+            const tbody = document.getElementById('accountsListBody');
+            
+            if (accountsData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No accounts found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = accountsData.map(account => `
+                <tr>
+                    <td>${account.account_code}</td>
+                    <td>${account.account_name}</td>
+                    <td>
+                        <span class="badge bg-${getAccountTypeColor(account.account_type)}">
+                            ${account.account_type}
+                        </span>
+                    </td>
+                    <td>₹${account.opening_balance.toFixed(2)}</td>
+                    <td>₹${account.current_balance.toFixed(2)}</td>
+                    <td>
+                        <span class="badge bg-success">Active</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewAccount('${account.account_code}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editAccount('${account.account_code}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Get account type color
+        function getAccountTypeColor(type) {
+            switch (type) {
+                case 'ASSET': return 'success';
+                case 'LIABILITY': return 'danger';
+                case 'EQUITY': return 'info';
+                case 'REVENUE': return 'warning';
+                case 'EXPENSE': return 'secondary';
+                default: return 'primary';
+            }
+        }
+
+        // Populate account dropdowns
+        function populateAccountDropdowns() {
+            const dropdowns = document.querySelectorAll('select[name="account_code"]');
+            dropdowns.forEach(dropdown => {
+                dropdown.innerHTML = '<option value="">Select Account</option>';
+                accountsData.forEach(account => {
+                    const option = document.createElement('option');
+                    option.value = account.account_code;
+                    option.textContent = `${account.account_code} - ${account.account_name}`;
+                    dropdown.appendChild(option);
+                });
+            });
+        }
+
+        // Add entry detail row
+        function addEntryDetail() {
+            const container = document.getElementById('entryDetails');
+            const newRow = document.createElement('div');
+            newRow.className = 'row mb-2';
+            newRow.innerHTML = `
+                <div class="col-md-4">
+                    <select class="form-select" name="account_code" required>
+                        <option value="">Select Account</option>
+                        ${accountsData.map(account => 
+                            `<option value="${account.account_code}">${account.account_code} - ${account.account_name}</option>`
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="debit_amount" step="0.01" min="0" placeholder="Debit">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control" name="credit_amount" step="0.01" min="0" placeholder="Credit">
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeEntryDetail(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+
+        // Remove entry detail row
+        function removeEntryDetail(button) {
+            button.closest('.row').remove();
+            calculateTotals();
+        }
+
+        // Calculate totals
+        function calculateTotals() {
+            const debitInputs = document.querySelectorAll('input[name="debit_amount"]');
+            const creditInputs = document.querySelectorAll('input[name="credit_amount"]');
+            
+            let totalDebit = 0;
+            let totalCredit = 0;
+            
+            debitInputs.forEach(input => {
+                totalDebit += parseFloat(input.value) || 0;
+            });
+            
+            creditInputs.forEach(input => {
+                totalCredit += parseFloat(input.value) || 0;
+            });
+            
+            const difference = totalDebit - totalCredit;
+            
+            document.getElementById('totalDebit').textContent = '₹' + totalDebit.toFixed(2);
+            document.getElementById('totalCredit').textContent = '₹' + totalCredit.toFixed(2);
+            document.getElementById('difference').textContent = '₹' + difference.toFixed(2);
+            
+            const balanceStatus = document.getElementById('balanceStatus');
+            if (Math.abs(difference) < 0.01) {
+                balanceStatus.className = 'alert alert-success';
+                balanceStatus.innerHTML = '<i class="fas fa-check-circle me-2"></i>Balanced - Ready to post';
+            } else {
+                balanceStatus.className = 'alert alert-danger';
+                balanceStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-2"></i>Not balanced - Check entries';
+            }
+        }
+
+        // Handle journal entry form submission
+        document.getElementById('journalEntryForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Collect entry details
+            const details = [];
+            const rows = document.querySelectorAll('#entryDetails .row');
+            
+            rows.forEach(row => {
+                const accountCode = row.querySelector('select[name="account_code"]').value;
+                const debitAmount = parseFloat(row.querySelector('input[name="debit_amount"]').value) || 0;
+                const creditAmount = parseFloat(row.querySelector('input[name="credit_amount"]').value) || 0;
+                
+                if (accountCode) {
+                    details.push({
+                        account_code: accountCode,
+                        debit_amount: debitAmount,
+                        credit_amount: creditAmount,
+                        narration: document.getElementById('entryNarration').value
+                    });
+                }
+            });
+            
+            if (details.length < 2) {
+                showAlert('At least 2 entries are required', 'danger');
+                return;
+            }
+            
+            const formData = {
+                entry_date: document.getElementById('entryDate').value,
+                narration: document.getElementById('entryNarration').value,
+                details: details
+            };
+
+            try {
+                const response = await fetch('/api/financial/journal-entry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    showAlert('Journal entry posted successfully!', 'success');
+                    document.getElementById('journalEntryForm').reset();
+                    setDefaultDates();
+                    loadStatistics();
+                    loadAccounts();
+                } else {
+                    showAlert(result.error || 'Error posting journal entry', 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error posting journal entry', 'danger');
+            }
+        });
+
+        // Load ledger
+        async function loadLedger() {
+            try {
+                const accountCode = document.getElementById('filterLedgerAccount').value;
+                const startDate = document.getElementById('ledgerStartDate').value;
+                const endDate = document.getElementById('ledgerEndDate').value;
+                
+                const params = new URLSearchParams();
+                if (accountCode) params.append('account_code', accountCode);
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                
+                const response = await fetch(`/api/financial/ledger?${params}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayLedger(data.ledger_entries);
+                } else {
+                    showAlert('Error loading ledger', 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading ledger:', error);
+                showAlert('Error loading ledger', 'danger');
+            }
+        }
+
+        // Display ledger
+        function displayLedger(entries) {
+            const tbody = document.getElementById('ledgerListBody');
+            
+            if (entries.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center">No ledger entries found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = entries.map(entry => `
+                <tr>
+                    <td>${entry.entry_date}</td>
+                    <td>${entry.voucher_no}</td>
+                    <td>${entry.account_code}</td>
+                    <td class="debit">${entry.debit_amount > 0 ? '₹' + entry.debit_amount.toFixed(2) : ''}</td>
+                    <td class="credit">${entry.credit_amount > 0 ? '₹' + entry.credit_amount.toFixed(2) : ''}</td>
+                    <td>₹${entry.balance.toFixed(2)}</td>
+                    <td>${entry.narration || '-'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Placeholder functions
+        function showAddAccountForm() {
+            showAlert('Add account form will be implemented', 'info');
+        }
+
+        function viewAccount(accountCode) {
+            showAlert(`Viewing account ${accountCode}`, 'info');
+        }
+
+        function editAccount(accountCode) {
+            showAlert(`Editing account ${accountCode}`, 'info');
+        }
+
+        function generateTrialBalance() {
+            showAlert('Trial balance will be generated', 'info');
+        }
+
+        function generateBalanceSheet() {
+            showAlert('Balance sheet will be generated', 'info');
+        }
+
+        function generateProfitLoss() {
+            showAlert('Profit & Loss statement will be generated', 'info');
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertId = 'alert-' + Date.now();
+            
+            const alertHTML = `
+                <div id="${alertId}" class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            alertContainer.innerHTML = alertHTML;
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const alert = document.getElementById(alertId);
+                if (alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

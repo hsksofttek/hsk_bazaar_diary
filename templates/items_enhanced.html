@@ -1,0 +1,873 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Items Management - Business Management System{% endblock %}
+{% block page_title %}Modern Items Management{% endblock %}
+
+{% block content %}
+<!-- TEST: ENHANCED TEMPLATE IS LOADING -->
+<div class="alert alert-danger" role="alert">
+    <strong>🚨 ENHANCED TEMPLATE CONFIRMED!</strong> This is the NEW enhanced template with modern UI.
+</div>
+
+<!-- Enhanced Header with Live Stats -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="fas fa-boxes me-2"></i>Items Management
+                        </h4>
+                        <p class="mb-0">Manage your product catalog and inventory items</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="totalItems">0</h3>
+                                    <small>Total Items</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="inStockItems">0</h3>
+                                    <small>In Stock</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="lowStockItems">0</h3>
+                                    <small>Low Stock</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Search and Actions -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <!-- Search Bar -->
+        <div class="input-group mb-4">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" 
+                   class="form-control form-control-lg" 
+                   id="searchInput"
+                   placeholder="Type to search items (name, code, category)...">
+            <button class="btn btn-outline-secondary" 
+                    onclick="toggleFilters()">
+                <i class="fas fa-filter"></i>
+            </button>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <div class="card mb-4" id="advancedFiltersCard" style="display: none;">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Advanced Filters
+                    <button class="btn btn-sm btn-outline-secondary float-end" 
+                            onclick="toggleFilters()">
+                        <i class="fas fa-chevron-down" id="filterChevron"></i>
+                    </button>
+                </h6>
+            </div>
+            <div class="card-body" id="filterBody" style="display: none;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-control" id="categoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="Grains">Grains</option>
+                            <option value="Essentials">Essentials</option>
+                            <option value="Oils">Oils</option>
+                            <option value="Beverages">Beverages</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Stock Status</label>
+                        <select class="form-control" id="stockFilter">
+                            <option value="">All Items</option>
+                            <option value="in_stock">In Stock</option>
+                            <option value="low_stock">Low Stock</option>
+                            <option value="out_of_stock">Out of Stock</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price Range</label>
+                        <select class="form-control" id="priceFilter">
+                            <option value="">All Prices</option>
+                            <option value="0-100">₹0 - ₹100</option>
+                            <option value="100-500">₹100 - ₹500</option>
+                            <option value="500-1000">₹500 - ₹1000</option>
+                            <option value="1000+">₹1000+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-control" id="sortByFilter">
+                            <option value="name">Name</option>
+                            <option value="code">Code</option>
+                            <option value="category">Category</option>
+                            <option value="rate">Price</option>
+                            <option value="stock">Stock</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="clearFilters()">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                        <button class="btn btn-outline-success btn-sm ms-2" onclick="exportItems()">
+                            <i class="fas fa-download me-2"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 text-end">
+        <button class="btn btn-success btn-lg" 
+                onclick="openAddItemModal()">
+            <i class="fas fa-plus me-2"></i>Add Item
+        </button>
+    </div>
+</div>
+
+<!-- Enhanced Items Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-boxes me-2"></i>Items
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-primary"
+                    onclick="loadItemsTable()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+            <button class="btn btn-sm btn-outline-secondary"
+                    onclick="exportItems()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <!-- Results Summary -->
+        <div class="d-flex justify-content-between align-items-center p-3">
+            <div>
+                <span class="text-muted" id="resultsCount">Loading items...</span>
+            </div>
+        </div>
+        <div id="itemsTable">
+            <!-- Table will be loaded here -->
+            <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading items table...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Modal -->
+<div class="modal fade" id="itemModal" tabindex="-1" aria-labelledby="itemModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Modal content will be loaded here -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block head %}
+<style>
+/* Enhanced Items Management Styles */
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+}
+
+.item-code-badge {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stock-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.stock-badge.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.stock-badge.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.stock-badge.danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.btn-view {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.btn-edit {
+    background-color: #fff3e0;
+    color: #f57c00;
+    border: 1px solid #ffcc02;
+}
+
+.btn-delete {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Table Enhancements */
+.table th {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: #e9ecef;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.001);
+    transition: all 0.2s ease;
+}
+
+/* Blue Gradient Header */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card.bg-gradient-primary {
+    border: none !important;
+    box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2) !important;
+}
+
+.card.bg-gradient-primary .card-body {
+    padding: 1.5rem !important;
+}
+
+.card.bg-gradient-primary h4 {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.card.bg-gradient-primary p {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.card.bg-gradient-primary h3 {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.card.bg-gradient-primary small {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.875rem !important;
+}
+
+/* Ensure header is always visible */
+#totalItems, #inStockItems, #lowStockItems {
+    min-height: 2.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+}
+
+.modal-title {
+    font-weight: 600;
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+/* Fix modal backdrop and scrolling */
+.modal-backdrop {
+    display: none !important;
+}
+
+.modal {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.modal.show {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Ensure main screen remains scrollable */
+body.modal-open {
+    overflow: auto !important;
+    padding-right: 0 !important;
+}
+
+/* Force scrollbar to always be visible */
+body {
+    overflow-y: scroll !important;
+}
+
+/* Modal close event handling */
+.modal {
+    overflow-y: auto !important;
+}
+
+/* Modal form styling */
+.modal .form-control,
+.modal .form-select {
+    background: #ffffff !important;
+    color: #333333 !important;
+    border: 2px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 12px 16px !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+.modal .form-label {
+    color: #374151 !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+    margin-bottom: 8px !important;
+}
+
+.modal .btn {
+    padding: 12px 24px !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    border-radius: 8px !important;
+    border: none !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
+}
+
+.modal .btn-primary {
+    background: linear-gradient(135deg, #6366f1, #4f46e5) !important;
+    color: white !important;
+}
+
+.modal .btn-secondary {
+    background: linear-gradient(135deg, #6b7280, #4b5563) !important;
+    color: white !important;
+}
+
+.modal .btn-success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: white !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.125rem;
+    }
+    
+    .btn-action {
+        width: 28px;
+        height: 28px;
+        font-size: 0.75rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Modal event handlers
+document.addEventListener('DOMContentLoaded', function() {
+    const itemModal = document.getElementById('itemModal');
+    if (itemModal) {
+        itemModal.addEventListener('hidden.bs.modal', function() {
+            // Restore scrollbar when modal is closed
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+            console.log('Modal closed, scrollbar restored');
+        });
+        
+        itemModal.addEventListener('shown.bs.modal', function() {
+            // Ensure body remains scrollable when modal is shown
+            document.body.style.overflow = 'auto';
+            document.body.style.paddingRight = '0';
+            console.log('Modal shown, scrollbar maintained');
+        });
+    }
+});
+
+// Load stats on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Items enhanced page loaded');
+    
+    // Ensure header is visible immediately
+    ensureHeaderVisible();
+    
+    loadStats();
+    loadItemsTable();
+    
+    // Add action listeners after a delay
+    setTimeout(addActionListeners, 1000);
+});
+
+// Ensure header is always visible
+function ensureHeaderVisible() {
+    console.log('Ensuring header is visible...');
+    
+    const totalElement = document.getElementById('totalItems');
+    const inStockElement = document.getElementById('inStockItems');
+    const lowStockElement = document.getElementById('lowStockItems');
+    
+    if (totalElement) {
+        totalElement.textContent = '0';
+        console.log('Set totalItems to 0');
+    } else {
+        console.error('totalItems element not found');
+    }
+    
+    if (inStockElement) {
+        inStockElement.textContent = '0';
+        console.log('Set inStockItems to 0');
+    } else {
+        console.error('inStockItems element not found');
+    }
+    
+    if (lowStockElement) {
+        lowStockElement.textContent = '0';
+        console.log('Set lowStockItems to 0');
+    } else {
+        console.error('lowStockItems element not found');
+    }
+}
+
+// Load stats
+function loadStats() {
+    console.log('Loading stats...');
+    
+    // Test stats API first
+    fetch('/api/items/stats/test')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Stats test response:', data);
+            if (data.success) {
+                console.log('Stats API is working. Total:', data.total, 'In Stock:', data.instock, 'Low Stock:', data.lowstock);
+            } else {
+                console.error('Stats API error:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Stats test error:', error);
+        });
+    
+    // Set fallback values first
+    const totalElement = document.getElementById('totalItems');
+    const inStockElement = document.getElementById('inStockItems');
+    const lowStockElement = document.getElementById('lowStockItems');
+    
+    if (totalElement) totalElement.textContent = '0';
+    if (inStockElement) inStockElement.textContent = '0';
+    if (lowStockElement) lowStockElement.textContent = '0';
+    
+    // Load total items
+    fetch('/api/items/stats/total')
+        .then(response => {
+            console.log('Total items response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('Total items data:', data);
+            if (totalElement) {
+                totalElement.textContent = data;
+            } else {
+                console.error('totalItems element not found');
+            }
+        })
+        .catch(error => {
+            console.error('Error loading total items:', error);
+            if (totalElement) {
+                totalElement.textContent = '0';
+            }
+        });
+    
+    // Load in stock items
+    fetch('/api/items/stats/instock')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('In stock items data:', data);
+            if (inStockElement) {
+                inStockElement.textContent = data;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading in stock items:', error);
+            if (inStockElement) {
+                inStockElement.textContent = '0';
+            }
+        });
+    
+    // Load low stock items
+    fetch('/api/items/stats/lowstock')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
+        .then(data => {
+            console.log('Low stock items data:', data);
+            if (lowStockElement) {
+                lowStockElement.textContent = data;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading low stock items:', error);
+            if (lowStockElement) {
+                lowStockElement.textContent = '0';
+            }
+        });
+}
+
+// Load items table
+function loadItemsTable() {
+    const tbody = document.getElementById('itemsTable');
+    tbody.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading items...</p></div>';
+    
+    fetch('/api/items/table')
+        .then(response => response.text())
+        .then(data => {
+            tbody.innerHTML = data;
+            document.getElementById('resultsCount').textContent = 'Items loaded successfully';
+        })
+        .catch(error => {
+            console.error('Error loading items table:', error);
+            tbody.innerHTML = '<div class="alert alert-danger">Error loading items. Please try again.</div>';
+            document.getElementById('resultsCount').textContent = 'Error loading items';
+        });
+}
+
+// Search functionality
+let searchTimeout;
+function performSearch() {
+    const searchTerm = document.getElementById('searchInput').value;
+    const tbody = document.getElementById('itemsTable');
+    
+    // Update results count
+    document.getElementById('resultsCount').textContent = `Searching for "${searchTerm}"...`;
+    
+    // Clear previous timeout
+    clearTimeout(searchTimeout);
+    
+    // Set new timeout for search
+    searchTimeout = setTimeout(() => {
+        tbody.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Searching...</p></div>';
+        
+        fetch(`/api/items/table?search=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.text())
+            .then(data => {
+                tbody.innerHTML = data;
+                document.getElementById('resultsCount').textContent = `Found items for "${searchTerm}"`;
+            })
+            .catch(error => {
+                console.error('Error searching items:', error);
+                tbody.innerHTML = '<div class="alert alert-danger">Error searching items. Please try again.</div>';
+                document.getElementById('resultsCount').textContent = 'Error searching items';
+            });
+    }, 300);
+}
+
+// Advanced filters
+function toggleFilters() {
+    const card = document.getElementById('advancedFiltersCard');
+    const body = document.getElementById('filterBody');
+    const chevron = document.getElementById('filterChevron');
+    
+    if (card.style.display === 'none') {
+        card.style.display = 'block';
+        body.style.display = 'block';
+        chevron.className = 'fas fa-chevron-up';
+    } else {
+        card.style.display = 'none';
+        body.style.display = 'none';
+        chevron.className = 'fas fa-chevron-down';
+    }
+}
+
+function applyFilters() {
+    const category = document.getElementById('categoryFilter').value;
+    const stock = document.getElementById('stockFilter').value;
+    const price = document.getElementById('priceFilter').value;
+    const sortBy = document.getElementById('sortByFilter').value;
+    
+    const tbody = document.getElementById('itemsTable');
+    document.getElementById('resultsCount').textContent = 'Applying filters...';
+    
+    tbody.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Applying filters...</p></div>';
+    
+    const params = new URLSearchParams();
+    if (category) params.append('category', category);
+    if (stock) params.append('stock', stock);
+    if (price) params.append('price', price);
+    if (sortBy) params.append('sort', sortBy);
+    
+    fetch(`/api/items/table?${params.toString()}`)
+        .then(response => response.text())
+        .then(data => {
+            tbody.innerHTML = data;
+            document.getElementById('resultsCount').textContent = 'Filters applied successfully';
+        })
+        .catch(error => {
+            console.error('Error applying filters:', error);
+            tbody.innerHTML = '<div class="alert alert-danger">Error applying filters. Please try again.</div>';
+            document.getElementById('resultsCount').textContent = 'Error applying filters';
+        });
+}
+
+function clearFilters() {
+    document.getElementById('categoryFilter').value = '';
+    document.getElementById('stockFilter').value = '';
+    document.getElementById('priceFilter').value = '';
+    document.getElementById('sortByFilter').value = 'name';
+    
+    loadItemsTable();
+}
+
+// Export Items
+function exportItems() {
+    console.log('Exporting items...');
+    
+    // Get current search and filter values
+    const searchTerm = document.getElementById('searchInput').value;
+    const categoryFilter = document.getElementById('categoryFilter') ? document.getElementById('categoryFilter').value : '';
+    const stockFilter = document.getElementById('stockFilter') ? document.getElementById('stockFilter').value : '';
+    const priceFilter = document.getElementById('priceFilter') ? document.getElementById('priceFilter').value : '';
+    const sortBy = document.getElementById('sortByFilter') ? document.getElementById('sortByFilter').value : 'name';
+    
+    // Build export URL with filters
+    const params = new URLSearchParams();
+    if (searchTerm) params.append('search', searchTerm);
+    if (categoryFilter) params.append('category', categoryFilter);
+    if (stockFilter) params.append('stock', stockFilter);
+    if (priceFilter) params.append('price', priceFilter);
+    if (sortBy) params.append('sort', sortBy);
+    
+    const exportUrl = `/api/items/export?${params.toString()}`;
+    window.open(exportUrl, '_blank');
+    
+    console.log('Export initiated');
+}
+
+// Add Item Modal
+function openAddItemModal() {
+    console.log('Opening add item modal...');
+    
+    // Load the add form into the modal
+    fetch('/api/items/add-form')
+        .then(response => response.text())
+        .then(data => {
+            document.querySelector('#itemModal .modal-content').innerHTML = data;
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('itemModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error loading add form:', error);
+            alert('Error loading add item form. Please try again.');
+        });
+}
+
+// Delete Item
+function deleteItem(itemCode) {
+    if (confirm('Are you sure you want to delete this item?')) {
+        console.log('Deleting item:', itemCode);
+        fetch(`/api/items/delete/${itemCode}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Item deleted successfully!');
+                loadItemsTable(); // Reload the table
+                loadStats(); // Reload stats
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting item:', error);
+            alert('Error deleting item. Please try again.');
+        });
+    }
+}
+
+// Load Edit Form from View Form
+function loadEditForm(itemCode) {
+    console.log('Loading edit form for item:', itemCode);
+    fetch(`/api/items/edit/${itemCode}`)
+        .then(response => response.text())
+        .then(data => {
+            document.querySelector('#itemModal .modal-content').innerHTML = data;
+            // Modal is already open, no need to show it again
+        })
+        .catch(error => {
+            console.error('Error loading edit form:', error);
+            alert('Error loading edit form. Please try again.');
+        });
+}
+
+// Search on Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        performSearch();
+    }
+});
+
+// Search on input change
+document.getElementById('searchInput').addEventListener('input', function() {
+    performSearch();
+});
+
+// Add event listeners for action buttons after table loads
+function addActionListeners() {
+    console.log('Adding action listeners...');
+    
+    // View buttons
+    document.querySelectorAll('.btn-view').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const itemCode = this.getAttribute('data-item-code');
+            console.log('Viewing item:', itemCode);
+            
+            fetch(`/api/items/view/${itemCode}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.querySelector('#itemModal .modal-content').innerHTML = data;
+                    const modal = new bootstrap.Modal(document.getElementById('itemModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading view form:', error);
+                    alert('Error loading item details. Please try again.');
+                });
+        });
+    });
+    
+    // Edit buttons
+    document.querySelectorAll('.btn-edit').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const itemCode = this.getAttribute('data-item-code');
+            console.log('Editing item:', itemCode);
+            
+            fetch(`/api/items/edit/${itemCode}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.querySelector('#itemModal .modal-content').innerHTML = data;
+                    const modal = new bootstrap.Modal(document.getElementById('itemModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading edit form:', error);
+                    alert('Error loading edit form. Please try again.');
+                });
+        });
+    });
+    
+    console.log('Action listeners added successfully');
+}
+
+// Call addActionListeners after table loads
+const originalLoadItemsTable = loadItemsTable;
+loadItemsTable = function() {
+    originalLoadItemsTable();
+    setTimeout(addActionListeners, 500); // Increased timeout to ensure table is loaded
+};
+</script>
+{% endblock %} 

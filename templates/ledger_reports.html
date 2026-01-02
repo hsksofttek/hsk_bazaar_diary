@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Ledger Reports - Business Management System{% endblock %}
+{% block page_title %}Ledger Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-filter me-2"></i>Report Filters</h6>
+            </div>
+            <div class="card-body">
+                <form id="ledgerForm">
+                    <div class="mb-3">
+                        <label class="form-label">Party *</label>
+                        <select class="form-select" name="party_code" id="party_code" required>
+                            <option value="">Select Party</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">From Date</label>
+                        <input type="date" class="form-control" name="from_date" id="from_date">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">To Date</label>
+                        <input type="date" class="form-control" name="to_date" id="to_date">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Report Type</label>
+                        <select class="form-select" name="report_type" id="report_type">
+                            <option value="detailed">Detailed Ledger</option>
+                            <option value="summary">Summary Ledger</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Generate Report
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-file-alt me-2"></i>Ledger Report</h6>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="printReport()" id="printBtn" style="display: none;">
+                        <i class="fas fa-print me-1"></i>Print
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="exportToExcel()" id="exportBtn" style="display: none;">
+                        <i class="fas fa-file-excel me-1"></i>Export
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="reportContent">
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-chart-line fa-3x mb-3 opacity-25"></i>
+                        <h5>No Report Generated</h5>
+                        <p>Select a party and generate a ledger report using the filters on the left.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load parties when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadParties();
+    
+    // Set default dates (current month)
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    
+    document.getElementById('from_date').value = firstDay.toISOString().split('T')[0];
+    document.getElementById('to_date').value = lastDay.toISOString().split('T')[0];
+});
+
+// Load parties for dropdown
+function loadParties() {
+    fetch('/api/parties')
+        .then(response => response.json())
+        .then(data => {
+            const partySelect = document.getElementById('party_code');
+            partySelect.innerHTML = '<option value="">Select Party</option>';
+            data.parties.forEach(party => {
+                partySelect.innerHTML += `<option value="${party.party_cd}">${party.party_cd} - ${party.party_nm}</option>`;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading parties:', error);
+        });
+}
+
+// Generate ledger report
+document.getElementById('ledgerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    if (!data.party_code) {
+        alert('Please select a party');
+        return;
+    }
+    
+    // Show loading
+    document.getElementById('reportContent').innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Generating ledger report...</p>
+        </div>
+    `;
+    
+    // Generate report
+    fetch('/api/ledger-report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            displayLedgerReport(result.data);
+            document.getElementById('printBtn').style.display = 'inline-block';
+            document.getElementById('exportBtn').style.display = 'inline-block';
+        } else {
+            document.getElementById('reportContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error: ${result.message}
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('reportContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                An error occurred while generating the report.
+            </div>
+        `;
+    });
+});
+
+// Display ledger report
+function displayLedgerReport(data) {
+    const { party, transactions, summary } = data;
+    
+    let html = `
+        <div class="ledger-report">
+            <div class="report-header text-center mb-4">
+                <h4>LEDGER STATEMENT</h4>
+                <h6>${party.party_nm} (${party.party_cd})</h6>
+                <p class="text-muted">Period: ${data.from_date} to ${data.to_date}</p>
+            </div>
+            
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6>Opening Balance</h6>
+                            <h4 class="text-primary">₹${summary.opening_balance.toFixed(2)}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6>Total Debit</h6>
+                            <h4 class="text-danger">₹${summary.total_debit.toFixed(2)}</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6>Total Credit</h6>
+                            <h4 class="text-success">₹${summary.total_credit.toFixed(2)}</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Date</th>
+                            <th>Particulars</th>
+                            <th>Debit</th>
+                            <th>Credit</th>
+                            <th>Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+    `;
+    
+    let runningBalance = summary.opening_balance;
+    
+    transactions.forEach(transaction => {
+        const debit = transaction.type === 'debit' ? transaction.amount : 0;
+        const credit = transaction.type === 'credit' ? transaction.amount : 0;
+        
+        if (transaction.type === 'debit') {
+            runningBalance += debit;
+        } else {
+            runningBalance -= credit;
+        }
+        
+        html += `
+            <tr>
+                <td>${transaction.date}</td>
+                <td>${transaction.particulars}</td>
+                <td class="text-end">${debit > 0 ? '₹' + debit.toFixed(2) : ''}</td>
+                <td class="text-end">${credit > 0 ? '₹' + credit.toFixed(2) : ''}</td>
+                <td class="text-end ${runningBalance >= 0 ? 'text-success' : 'text-danger'}">
+                    ₹${Math.abs(runningBalance).toFixed(2)} ${runningBalance >= 0 ? 'Dr' : 'Cr'}
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                    </tbody>
+                    <tfoot class="table-dark">
+                        <tr>
+                            <th colspan="2">Closing Balance</th>
+                            <th class="text-end">₹${summary.total_debit.toFixed(2)}</th>
+                            <th class="text-end">₹${summary.total_credit.toFixed(2)}</th>
+                            <th class="text-end ${runningBalance >= 0 ? 'text-success' : 'text-danger'}">
+                                ₹${Math.abs(runningBalance).toFixed(2)} ${runningBalance >= 0 ? 'Dr' : 'Cr'}
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('reportContent').innerHTML = html;
+}
+
+// Print report
+function printReport() {
+    const reportContent = document.querySelector('.ledger-report');
+    if (reportContent) {
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Ledger Report</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                    <style>
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none !important; }
+                        }
+                        .table th, .table td { padding: 8px; }
+                    </style>
+                </head>
+                <body>
+                    ${reportContent.outerHTML}
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.print();
+    }
+}
+
+// Export to Excel
+function exportToExcel() {
+    alert('Export to Excel functionality will be implemented!');
+}
+</script>
+
+<style>
+.ledger-report {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.report-header h4 {
+    color: #2c3e50;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.report-header h6 {
+    color: #34495e;
+    font-weight: 600;
+}
+
+.table th {
+    background-color: #2c3e50 !important;
+    color: white !important;
+    font-weight: 600;
+    text-align: center;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.text-end {
+    text-align: right !important;
+}
+
+@media print {
+    .btn, .card-header .btn {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .card-header {
+        background: white !important;
+        color: black !important;
+        border-bottom: 2px solid #000 !important;
+    }
+}
+</style>
+{% endblock %} 
+ 
+ 
+ 

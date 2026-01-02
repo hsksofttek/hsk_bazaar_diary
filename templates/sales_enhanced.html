@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Sales Management - Business Management System{% endblock %}
+{% block page_title %}Modern Sales Management{% endblock %}
+
+{% block content %}
+<!-- Enhanced Header with Live Stats -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="mb-0">
+                            <i class="fas fa-cash-register me-2"></i>Sales Management
+                        </h4>
+                        <p class="mb-0">Manage your sales transactions and invoices</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="totalSales">0</h3>
+                                    <small>Total Sales</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="monthlySales">0</h3>
+                                    <small>This Month</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <h3 id="todaySales">0</h3>
+                                    <small>Today</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Search and Actions -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <!-- Search Bar -->
+        <div class="input-group mb-4">
+            <span class="input-group-text">
+                <i class="fas fa-search"></i>
+            </span>
+            <input type="text" 
+                   class="form-control form-control-lg" 
+                   id="searchInput"
+                   placeholder="Type to search sales (bill number, customer, item)...">
+            <button class="btn btn-outline-secondary" 
+                    onclick="toggleFilters()">
+                <i class="fas fa-filter"></i>
+            </button>
+        </div>
+        
+        <!-- Advanced Filters -->
+        <div class="card mb-4" id="advancedFiltersCard" style="display: none;">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>Advanced Filters
+                    <button class="btn btn-sm btn-outline-secondary float-end" 
+                            onclick="toggleFilters()">
+                        <i class="fas fa-chevron-down" id="filterChevron"></i>
+                    </button>
+                </h6>
+            </div>
+            <div class="card-body" id="filterBody" style="display: none;">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Date Range</label>
+                        <select class="form-control" id="dateFilter">
+                            <option value="">All Dates</option>
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="quarter">This Quarter</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Customer</label>
+                        <select class="form-control" id="customerFilter">
+                            <option value="">All Customers</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Amount Range</label>
+                        <select class="form-control" id="amountFilter">
+                            <option value="">All Amounts</option>
+                            <option value="0-1000">₹0 - ₹1,000</option>
+                            <option value="1000-5000">₹1,000 - ₹5,000</option>
+                            <option value="5000-10000">₹5,000 - ₹10,000</option>
+                            <option value="10000+">₹10,000+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Sort By</label>
+                        <select class="form-control" id="sortByFilter">
+                            <option value="date">Date</option>
+                            <option value="amount">Amount</option>
+                            <option value="customer">Customer</option>
+                            <option value="bill_no">Bill Number</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12 text-end">
+                        <button class="btn btn-primary" onclick="applyFilters()">
+                            <i class="fas fa-filter me-1"></i>Apply Filters
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i class="fas fa-times me-1"></i>Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 text-end">
+        <button class="btn btn-success btn-lg" onclick="openAddSaleModal()">
+            <i class="fas fa-plus me-2"></i>Add Sale
+        </button>
+    </div>
+</div>
+
+<!-- Enhanced Sales Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-cash-register me-2"></i>Sales
+        </h5>
+        <div class="btn-group" role="group">
+            <button class="btn btn-sm btn-outline-primary" onclick="loadSalesTable()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportSales()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <!-- Results Summary -->
+        <div class="d-flex justify-content-between align-items-center p-3">
+            <div>
+                <span class="text-muted" id="resultsCount">Loading sales...</span>
+            </div>
+        </div>
+        <div id="salesTable">
+            <!-- Table will be loaded here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Sale Modal -->
+<div class="modal fade" id="saleModal" tabindex="-1" aria-labelledby="saleModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <!-- Modal content will be loaded here by JavaScript -->
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block head %}
+<style>
+/* Enhanced Sales Management Styles */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.card.bg-gradient-primary {
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
+}
+
+.card.bg-gradient-primary .card-body {
+    padding: 1.5rem !important;
+}
+
+.card.bg-gradient-primary h4 {
+    color: white !important;
+    font-weight: 600 !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.card.bg-gradient-primary p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin-bottom: 0 !important;
+}
+
+.card.bg-gradient-primary h3 {
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 2rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.card.bg-gradient-primary small {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 0.875rem !important;
+}
+
+.sale-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.items-badge {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+.btn-view {
+    background-color: #e3f2fd;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.btn-edit {
+    background-color: #fff3e0;
+    color: #f57c00;
+    border: 1px solid #ffcc02;
+}
+
+.btn-delete {
+    background-color: #ffebee;
+    color: #d32f2f;
+    border: 1px solid #ffcdd2;
+}
+
+.btn-action:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Table Enhancements */
+.table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.5px;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: #e9ecef;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.001);
+    transition: all 0.2s ease;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 1rem 1rem 0 0;
+    border-bottom: none;
+}
+
+.modal-title {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.btn-close {
+    filter: invert(1);
+    opacity: 1;
+}
+
+.modal .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.modal .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.modal .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
+.modal .btn {
+    border-radius: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* Remove modal backdrop completely */
+.modal-backdrop {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+/* Modal positioning */
+.modal-dialog-centered {
+    display: flex !important;
+    align-items: center !important;
+    min-height: calc(100% - 1rem) !important;
+}
+
+/* Ensure scrollbar is always visible */
+html, body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+body {
+    overflow-y: scroll !important;
+}
+
+.modal {
+    overflow-y: auto !important;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+let searchTimeout;
+let saleItemsData = [];
+let salePartiesData = [];
+let saleItemRowCounter = 0;
+let currentModalType = 'add';
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('Sales enhanced script v3 loaded');
+    ensureHeaderVisible();
+    await loadMetaData();
+    loadStats();
+    loadSalesTable();
+});
+
+function ensureHeaderVisible() {
+    ['totalSales','monthlySales','todaySales'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '0';
+    });
+}
+
+function loadStats() {
+    const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    fetch('/api/sales/stats/total').then(r=>r.text()).then(v=>setText('totalSales', v)).catch(()=>setText('totalSales','0'));
+    fetch('/api/sales/stats/monthly').then(r=>r.text()).then(v=>setText('monthlySales', v)).catch(()=>setText('monthlySales','0'));
+    fetch('/api/sales/stats/today').then(r=>r.text()).then(v=>setText('todaySales', v)).catch(()=>setText('todaySales','0'));
+}
+
+async function loadMetaData() {
+    try {
+        const [partiesRes, itemsRes] = await Promise.all([
+            fetch('/api/parties?per_page=500'),
+            fetch('/api/items/list')
+        ]);
+        const partiesData = await partiesRes.json();
+        const itemsData = await itemsRes.json();
+        if (partiesData.success) {
+            salePartiesData = partiesData.parties || [];
+            const cf = document.getElementById('customerFilter');
+            if (cf) cf.innerHTML = '<option value="">All Customers</option>' + salePartiesData.map(p => `<option value="${p.party_cd}">${p.party_cd} - ${p.party_nm}</option>`).join('');
+        }
+        if (itemsData.success) {
+            saleItemsData = itemsData.items || [];
+        }
+    } catch (err) {
+        console.error('metadata load error', err);
+    }
+}
+
+async function fetchNextBillNumber() {
+    try {
+        const res = await fetch('/api/sales/next-bill');
+        const data = await res.json();
+        return (data.success && data.bill_no) ? data.bill_no : 2001;
+    } catch {
+        return 2001;
+    }
+}
+
+function loadSalesTable() {
+    const params = new URLSearchParams({ page: 1, per_page: 50 });
+    const search = document.getElementById('searchInput')?.value;
+    if (search) params.append('search', search);
+    const date = document.getElementById('dateFilter')?.value;
+    if (date) params.append('start_date', date);
+    const customer = document.getElementById('customerFilter')?.value;
+    if (customer) params.append('party_id', customer);
+    const amount = document.getElementById('amountFilter')?.value;
+    if (amount) params.append('amount', amount);
+    const sort = document.getElementById('sortByFilter')?.value;
+    if (sort) params.append('sort', sort);
+
+    fetch(`/api/sales/list?${params}`).then(r=>r.json()).then(data=>{
+        if (data.success) {
+            renderSalesTable(data.sales || []);
+            const total = data.pagination ? data.pagination.total : (data.sales ? data.sales.length : 0);
+            const rc = document.getElementById('resultsCount'); if (rc) rc.textContent = `${total} sales loaded`;
+        } else {
+            document.getElementById('salesTable').innerHTML = '<div class="p-3 text-center text-muted">No sales found</div>';
+        }
+    }).catch(err=>{
+        console.error('loadSalesTable error', err);
+        document.getElementById('salesTable').innerHTML = '<div class="p-3 text-center text-danger">Error loading sales</div>';
+    });
+}
+
+function renderSalesTable(sales) {
+    if (!sales || !sales.length) {
+        document.getElementById('salesTable').innerHTML = '<div class="p-3 text-center text-muted">No sales found</div>';
+        return;
+    }
+    const rows = sales.map(s => {
+        const date = s.bill_date ? new Date(s.bill_date).toLocaleDateString('en-GB') : '-';
+        const amount = s.total_amount ? Number(s.total_amount).toLocaleString('en-IN', {minimumFractionDigits:2}) : '0.00';
+        const status = (s.payment_status || 'Pending').toUpperCase();
+        const badge = status === 'PAID' ? 'success' : 'warning';
+        return `<tr>
+            <td><span class="sale-badge">${s.bill_no || '-'}</span></td>
+            <td>${date}</td>
+            <td>${s.party_name || s.party_code || '-'}</td>
+            <td>₹${amount}</td>
+            <td><span class="badge bg-${badge}">${status}</span></td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn btn-action btn-view" data-bill-no="${s.bill_no}" title="View Sale"><i class="fas fa-eye"></i></button>
+                    <button class="btn btn-action btn-edit" data-bill-no="${s.bill_no}" title="Edit Sale"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-action btn-delete" data-bill-no="${s.bill_no}" title="Delete Sale"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+    document.getElementById('salesTable').innerHTML = `<table class="table table-hover mb-0">
+        <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Total Amount</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>${rows}</tbody></table>`;
+    addActionListeners();
+}
+
+function addActionListeners() {
+    document.querySelectorAll('.btn-view').forEach(btn => btn.onclick = () => openSaleModal(btn.dataset.billNo, 'view'));
+    document.querySelectorAll('.btn-edit').forEach(btn => btn.onclick = () => openSaleModal(btn.dataset.billNo, 'edit'));
+    document.querySelectorAll('.btn-delete').forEach(btn => btn.onclick = () => deleteSale(btn.dataset.billNo));
+}
+
+function openSaleModal(billNo, action) {
+    currentModalType = action;
+    const modal = new bootstrap.Modal(document.getElementById('saleModal'));
+    if (action === 'add') {
+        renderAddSaleModal();
+        fetchNextBillNumber().then(no => { const bf = document.getElementById('sale_bill_no'); if (bf) bf.value = no; });
+        saleItemRowCounter = 0;
+        const tbody = document.getElementById('saleItemsTableBody'); if (tbody) tbody.innerHTML = '';
+        addSaleItemRow();
+        calculateSaleBillTotal();
+        modal.show();
+        focusSaleModal();
+        return;
+    }
+    fetch(`/api/sales/${action}/${billNo}`).then(r=>r.text()).then(html=>{
+        document.querySelector('#saleModal .modal-content').innerHTML = html;
+        modal.show();
+        focusSaleModal();
+    }).catch(err=>{
+        console.error('load sale form error', err);
+        alert('Error loading sale form');
+    });
+}
+
+function openAddSaleModal() { openSaleModal(null, 'add'); }
+
+function deleteSale(billNo) {
+    if (!confirm('Are you sure you want to delete this sale?')) return;
+    fetch(`/api/sales/delete/${billNo}`, { method:'DELETE', headers:{'Content-Type':'application/json'} })
+        .then(r=>r.json()).then(res=>{
+            if (res.success) { alert('Sale deleted successfully'); loadSalesTable(); loadStats(); }
+            else alert('Error: ' + res.message);
+        }).catch(err=>{
+            console.error('delete sale error', err);
+            alert('Error deleting sale');
+        });
+}
+
+document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(loadSalesTable, 400);
+});
+
+function toggleFilters() {
+    const card = document.getElementById('advancedFiltersCard');
+    const body = document.getElementById('filterBody');
+    const chev = document.getElementById('filterChevron');
+    const show = card.style.display === 'none';
+    card.style.display = show ? 'block' : 'none';
+    body.style.display = show ? 'block' : 'none';
+    chev.classList.toggle('fa-chevron-up', show);
+    chev.classList.toggle('fa-chevron-down', !show);
+}
+
+function applyFilters() { loadSalesTable(); }
+function clearFilters() {
+    ['dateFilter','customerFilter','amountFilter','sortByFilter','searchInput'].forEach(id=>{
+        const el = document.getElementById(id);
+        if (el) el.value = id === 'sortByFilter' ? 'date' : '';
+    });
+    loadSalesTable();
+}
+
+function exportSales() {
+    const params = new URLSearchParams();
+    const search = document.getElementById('searchInput')?.value;
+    if (search) params.append('search', search);
+    const date = document.getElementById('dateFilter')?.value;
+    if (date) params.append('date', date);
+    const customer = document.getElementById('customerFilter')?.value;
+    if (customer) params.append('customer', customer);
+    const amount = document.getElementById('amountFilter')?.value;
+    if (amount) params.append('amount', amount);
+    const sort = document.getElementById('sortByFilter')?.value;
+    if (sort) params.append('sort', sort);
+    window.open(`/api/sales/export?${params.toString()}`, '_blank');
+}
+
+function focusSaleModal() {
+    const el = document.getElementById('saleModal');
+    if (!el) return;
+    setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 50);
+}
+
+// --- Form helpers reused for add/edit ---
+function renderAddSaleModal() {
+    const modal = document.getElementById('saleModal');
+    if (!modal) return;
+    const billDate = new Date().toISOString().split('T')[0];
+    const partyOptions = salePartiesData.map(p => `<option value="${p.party_cd}">${p.party_cd} - ${p.party_nm}</option>`).join('');
+    modal.querySelector('.modal-content').innerHTML = `
+    <div class="modal-header">
+        <h5 class="modal-title" id="saleModalLabel"><i class="fas fa-plus me-2"></i>Add New Sale Bill</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+    <div class="modal-body">
+        <form id="saleForm" onsubmit="saveSale(event)">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label bright-label">Bill Number</label>
+                    <input type="number" class="form-control bright-input" id="sale_bill_no" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label bright-label">Bill Date</label>
+                    <input type="date" class="form-control bright-input" id="sale_bill_date" value="${billDate}" required>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label bright-label">Customer</label>
+                    <select class="form-select bright-input" id="sale_party_cd" required>
+                        <option value="">Select Customer</option>
+                        ${partyOptions}
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-bordered" id="saleItemsTable">
+                    <thead>
+                        <tr>
+                            <th>Item</th><th>Qty</th><th>Rate</th><th>Discount</th><th>Amount</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="saleItemsTableBody"></tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <button type="button" class="btn btn-outline-primary" onclick="addSaleItemRow()"><i class="fas fa-plus me-2"></i>Add Item</button>
+                <div class="text-end">
+                    <div><small>Sub Total:</small> <input type="number" id="sale_sub_total" class="form-control d-inline-block w-auto" value="0.00" readonly></div>
+                    <div><small>Total Discount:</small> <input type="number" id="sale_total_discount" class="form-control d-inline-block w-auto" value="0.00" readonly></div>
+                    <div><small>GST (18%):</small> <input type="number" id="sale_gst_amount" class="form-control d-inline-block w-auto" value="0.00" readonly></div>
+                    <div><small>Grand Total:</small> <input type="number" id="sale_grand_total" class="form-control d-inline-block w-auto" value="0.00" readonly></div>
+                </div>
+            </div>
+            <div class="text-end">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Sale</button>
+            </div>
+        </form>
+    </div>`;
+}
+
+function addSaleItemRow() {
+    const tbody = document.getElementById('saleItemsTableBody');
+    if (!tbody) return;
+    const items = saleItemsData || [];
+    const options = items.map(item => `<option value="${item.it_cd}" data-rate="${item.rate || 0}" data-gst="${item.gst || 0}">${item.it_cd} - ${item.it_nm}</option>`).join('');
+    const rowId = `sale_row_${saleItemRowCounter}`;
+    const row = document.createElement('tr');
+    row.id = rowId;
+    row.innerHTML = `
+        <td><select class="form-select bright-input sale-item-select" onchange="onSaleItemSelect(${saleItemRowCounter})" required>
+            <option value="">Select Item</option>${options}
+        </select></td>
+        <td><input type="number" class="form-control bright-input sale-qty-input" step="0.01" min="0" value="1" onchange="calculateSaleRowTotal(${saleItemRowCounter})" required></td>
+        <td><input type="number" class="form-control bright-input sale-rate-input" step="0.01" min="0" value="0.00" onchange="calculateSaleRowTotal(${saleItemRowCounter})" required></td>
+        <td><input type="number" class="form-control bright-input sale-discount-input" step="0.01" min="0" value="0.00" onchange="calculateSaleRowTotal(${saleItemRowCounter})"></td>
+        <td><input type="number" class="form-control bright-input sale-amount-input" step="0.01" value="0.00" readonly></td>
+        <td><button type="button" class="btn btn-sm btn-danger" onclick="removeSaleItemRow(${saleItemRowCounter})"><i class="fas fa-trash"></i></button></td>`;
+    tbody.appendChild(row);
+    saleItemRowCounter++;
+    calculateSaleBillTotal();
+}
+
+function removeSaleItemRow(i) { const r = document.getElementById(`sale_row_${i}`); if (r) r.remove(); calculateSaleBillTotal(); }
+function onSaleItemSelect(i) { const r=document.getElementById(`sale_row_${i}`); if(!r)return; const sel=r.querySelector('.sale-item-select'); const rate=r.querySelector('.sale-rate-input'); if(sel&&rate){ const v=sel.options[sel.selectedIndex].getAttribute('data-rate')||0; rate.value=v; calculateSaleRowTotal(i);} }
+function calculateSaleRowTotal(i){const r=document.getElementById(`sale_row_${i}`);if(!r)return;const qty=parseFloat(r.querySelector('.sale-qty-input').value)||0;const rate=parseFloat(r.querySelector('.sale-rate-input').value)||0;const disc=parseFloat(r.querySelector('.sale-discount-input').value)||0;const amt=qty*rate-disc;r.querySelector('.sale-amount-input').value=amt.toFixed(2);calculateSaleBillTotal();}
+function calculateSaleBillTotal(){let sub=0,disc=0;document.querySelectorAll('#saleItemsTableBody tr').forEach(r=>{sub+=parseFloat(r.querySelector('.sale-amount-input').value)||0;disc+=parseFloat(r.querySelector('.sale-discount-input').value)||0;});const gst=sub*0.18;const grand=sub-disc+gst;['sale_sub_total','sale_total_discount','sale_gst_amount','sale_grand_total'].forEach((id,idx)=>{const el=document.getElementById(id); if(el){const val=[sub,disc,gst,grand][idx]; el.value=val.toFixed(2);}});}
+
+function saveSale(event){event.preventDefault(); const billNo=document.getElementById('sale_bill_no').value; const billDate=document.getElementById('sale_bill_date').value; const partyCd=document.getElementById('sale_party_cd').value; if(!billNo||!billDate||!partyCd){alert('Please fill required fields');return;} const items=[]; document.querySelectorAll('#saleItemsTableBody tr').forEach(r=>{const sel=r.querySelector('.sale-item-select');const qty=r.querySelector('.sale-qty-input');const rate=r.querySelector('.sale-rate-input');const disc=r.querySelector('.sale-discount-input'); if(sel&&qty&&rate&&sel.value){items.push({it_cd:sel.value,qty:parseFloat(qty.value)||0,rate:parseFloat(rate.value)||0,discount:parseFloat(disc.value)||0});}}); if(!items.length){alert('Add at least one item');return;} const payload={bill_no:parseInt(billNo),bill_date:billDate,party_cd:partyCd,items,total_discount:parseFloat(document.getElementById('sale_total_discount').value)||0,grand_total:parseFloat(document.getElementById('sale_grand_total').value)||0}; fetch('/api/sales/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(r=>r.json()).then(res=>{if(res.success){alert('Sale saved'); location.reload();} else alert('Error: '+res.message);}).catch(err=>{console.error('save sale error',err); alert('Error saving sale');});}
+</script>
+
+{% endblock %} 

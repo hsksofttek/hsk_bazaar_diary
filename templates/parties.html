@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Parties - Business Management System{% endblock %}
+{% block page_title %}Parties Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users me-2"></i>Parties Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5>Parties Management</h5>
+                        <p class="text-muted">This is the legacy parties module. For enhanced functionality, please use the Modern Parties module.</p>
+                        <a href="{{ url_for('parties_enhanced') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-right me-2"></i>Go to Modern Parties
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
