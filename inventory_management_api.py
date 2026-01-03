@@ -135,7 +135,8 @@ def get_inventory_list():
             page=page,
             per_page=limit,
             search=search,
-            category=category
+            category=category,
+            status=_status
         )
 
         if not result.get('success'):

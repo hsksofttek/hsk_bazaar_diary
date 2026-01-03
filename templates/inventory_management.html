@@ -471,6 +471,7 @@
                                             </button>
                                         </div>
                                     </div>
+                                    <div id="stockMovementsContent" class="mt-4"></div>
                                 </div>
                             </div>
 
@@ -483,6 +484,7 @@
                                     <button class="btn btn-warning" onclick="loadLowStockAlerts()">
                                         <i class="fas fa-refresh me-2"></i>Refresh Alerts
                                     </button>
+                                    <div id="lowStockContent" class="mt-4"></div>
                                 </div>
                             </div>
 
@@ -683,72 +685,30 @@
                 return;
             }
 
-            tbody.innerHTML = inventoryData.map(item => `
+            tbody.innerHTML = inventoryData.map(item => {
+                const qty = Number(item.current_qty ?? item.current_stock ?? 0);
+                const rate = Number(item.current_rate ?? item.rate ?? 0);
+                const value = Number(item.current_value ?? (qty * rate));
+                const min = Number(item.min_stock ?? item.reorder_level ?? 0);
+                const status = item.status || (qty > 0 ? 'ACTIVE' : 'INACTIVE');
+                return `
                 <tr>
                     <td>${item.it_cd}</td>
-                    <td>${item.it_nm || '-'}</td>
-                    <td>${item.category || '-'}</td>
-                    <td>${item.current_qty.toFixed(2)}</td>
-                    <td>₹${item.current_rate.toFixed(2)}</td>
-                    <td>₹${item.current_value.toFixed(2)}</td>
-                    <td>${item.min_stock.toFixed(2)}</td>
+                    <td>${item.it_nm || '-'} </td>
+                    <td>${item.category || '-'} </td>
+                    <td>${qty.toFixed(2)} </td>
+                    <td>\u20b9${rate.toFixed(2)} </td>
+                    <td>\u20b9${value.toFixed(2)} </td>
+                    <td>${min.toFixed(2)} </td>
+                    <td><span class="badge bg-${status === 'ACTIVE' ? 'success' : 'secondary'}">${status}</span></td>
                     <td>
-                        <span class="badge bg-${item.status === 'ACTIVE' ? 'success' : 'secondary'}">
-                            ${item.status}
-                        </span>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewItem('${item.it_cd}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-warning" onclick="editItem('${item.it_cd}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewItem('${item.it_cd}')"><i class="fas fa-eye"></i></button>
+                        <button class="btn btn-sm btn-outline-warning" onclick="editItem('${item.it_cd}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteItem('${item.it_cd}')"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
-            `).join('');
-        }
-
-        // Update pagination
-        function updatePagination(totalCount, limit) {
-            totalPages = Math.ceil(totalCount / limit);
-            const pagination = document.getElementById('inventoryPagination');
-            
-            let paginationHTML = '';
-            
-            // Previous button
-            paginationHTML += `
-                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
-                </li>
             `;
-            
-            // Page numbers
-            for (let i = 1; i <= totalPages; i++) {
-                paginationHTML += `
-                    <li class="page-item ${currentPage === i ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
-                    </li>
-                `;
-            }
-            
-            // Next button
-            paginationHTML += `
-                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
-                </li>
-            `;
-            
-            pagination.innerHTML = paginationHTML;
-            document.getElementById('inventoryCount').textContent = totalCount;
-        }
-
-        // Change page
-        function changePage(page) {
-            if (page >= 1 && page <= totalPages) {
-                currentPage = page;
-                loadInventoryList();
-            }
+            }).join('');
         }
 
         // Placeholder functions
@@ -760,19 +720,78 @@
             showAlert(`Editing item ${itemCode}`, 'info');
         }
 
-        function loadStockMovements() {
-            showAlert('Stock movements will be loaded', 'info');
+        async function loadStockMovements() {
+            try {
+                const startDate = document.getElementById('movementStartDate').value;
+                const endDate = document.getElementById('movementEndDate').value;
+                const itemCode = document.getElementById('filterItem').value;
+                const params = new URLSearchParams();
+                if (startDate) params.append('start_date', startDate);
+                if (endDate) params.append('end_date', endDate);
+                if (itemCode) params.append('it_cd', itemCode);
+                const res = await fetch(`/api/inventory/movements?${params}`);
+                const data = await res.json();
+                const container = document.getElementById('stockMovementsContent');
+                if (!data.success) {
+                    container.innerHTML = '<div class="text-danger">Error loading stock movements</div>';
+                    return;
+                }
+                const moves = data.stock_movements || [];
+                if (!moves.length) {
+                    container.innerHTML = '<div class="text-muted">No movements found for the selected filters.</div>';
+                    return;
+                }
+                const rows = moves.map(m => `
+                    <tr>
+                        <td>${m.date || '-'} </td>
+                        <td>${m.item_code || '-'} </td>
+                        <td>${m.movement_type || '-'} </td>
+                        <td>${Number(m.quantity || 0).toFixed(2)} </td>
+                        <td>${m.reference || '-'} </td>
+                        <td>${m.party_code || '-'} </td>
+                        <td>\u20b9${Number(m.amount || 0).toFixed(2)} </td>
+                    </tr>`).join('');
+                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Party</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            } catch (err) {
+                console.error(err);
+                showAlert('Error loading stock movements', 'danger');
+            }
         }
 
-        function loadLowStockAlerts() {
-            showAlert('Low stock alerts will be loaded', 'info');
+        async function loadLowStockAlerts() {
+            try {
+                const res = await fetch('/api/inventory/alerts');
+                const data = await res.json();
+                const container = document.getElementById('lowStockContent');
+                if (!data.success) {
+                    container.innerHTML = '<div class="text-danger">Error loading alerts</div>';
+                    return;
+                }
+                const alerts = data.low_stock_alerts || [];
+                if (!alerts.length) {
+                    container.innerHTML = '<div class="text-muted">All items are above minimum stock.</div>';
+                    return;
+                }
+                const rows = alerts.map(a => `
+                    <tr>
+                        <td>${a.item_code}</td>
+                        <td>${a.item_name || '-'} </td>
+                        <td>${Number(a.current_stock || 0).toFixed(2)} </td>
+                        <td>${Number(a.reorder_level || 0).toFixed(2)} </td>
+                        <td>${Number(a.shortage || 0).toFixed(2)} </td>
+                    </tr>`).join('');
+                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped"><thead><tr><th>Item Code</th><th>Name</th><th>Current</th><th>Min</th><th>Shortage</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            } catch (err) {
+                console.error(err);
+                showAlert('Error loading alerts', 'danger');
+            }
         }
 
         function generateReport(type) {
-            showAlert(`${type} report will be generated`, 'info');
+            showAlert(`${type} report will be generated soon`, 'info');
         }
 
-        // Show alert
+// Show alert
         function showAlert(message, type) {
             const alertContainer = document.getElementById('alertContainer');
             const alertId = 'alert-' + Date.now();

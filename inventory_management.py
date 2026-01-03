@@ -580,18 +580,14 @@ class InventoryManagementSystem:
             return {'success': False, 'error': str(e)}
     
     def get_inventory_list(self, user_id: int, page: int = 1, per_page: int = 20, 
-                          search: str = None, category: str = None) -> Dict:
+                          search: str = None, category: str = None, status: str = None) -> Dict:
         """Get paginated inventory list with filtering"""
         try:
             query = Item.query.filter(Item.user_id == user_id)
             
             if search:
-                query = query.filter(
-                    or_(
-                        Item.it_cd.contains(search),
-                        Item.it_nm.contains(search)
-                    )
-                )
+                like_term = f"%{search}%"
+                query = query.filter(or_(Item.it_cd.ilike(like_term), Item.it_nm.ilike(like_term)))
             
             if category:
                 query = query.filter(Item.category == category)
@@ -604,16 +600,21 @@ class InventoryManagementSystem:
             for item in pagination.items:
                 current_stock = self._calculate_current_stock(user_id, item.it_cd)
                 
+                if status == 'ACTIVE' and current_stock <= 0:
+                    continue
+                if status == 'INACTIVE' and current_stock > 0:
+                    continue
+                
                 inventory_list.append({
                     'item_code': item.it_cd,
                     'item_name': item.it_nm,
                     'category': item.category,
                     'unit': item.unit,
                     'current_stock': current_stock,
-                    'reorder_level': float(item.reorder_level),
-                    'rate': float(item.rate),
-                    'stock_value': current_stock * item.rate,
-                    'status': 'Low Stock' if current_stock <= item.reorder_level else 'Normal'
+                    'reorder_level': float(item.reorder_level or 0),
+                    'rate': float(item.rate or 0),
+                    'stock_value': current_stock * (item.rate or 0),
+                    'status': 'Low Stock' if current_stock <= (item.reorder_level or 0) else 'Normal'
                 })
             
             return {
