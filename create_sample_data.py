@@ -21,7 +21,7 @@ def create_sample_data():
     app = create_app()
     
     with app.app_context():
-        print("🔄 Creating sample data for multiple users...")
+        print("Creating sample data for multiple users...")
         
         # Create multiple users
         users_data = [
@@ -61,7 +61,7 @@ def create_sample_data():
             # Check if user already exists
             existing_user = User.query.filter_by(username=user_data['username']).first()
             if existing_user:
-                print(f"✅ User {user_data['username']} already exists")
+                print(f"User {user_data['username']} already exists")
                 created_users.append(existing_user)
                 continue
             
@@ -88,7 +88,7 @@ def create_sample_data():
             db.session.add(company)
             
             created_users.append(user)
-            print(f"✅ Created user: {user_data['username']} ({user_data['company_name']})")
+            print(f"Created user: {user_data['username']} ({user_data['company_name']})")
         
         db.session.commit()
         
@@ -104,8 +104,17 @@ def create_sample_data():
         
         # Create sample data for each user
         for user in created_users[1:]:  # Skip admin user
-            print(f"\n📊 Creating sample data for {user.username}...")
-            
+            print(f"\nCreating sample data for {user.username}...")
+
+            # Clear existing data for this user to keep script idempotent
+            Purchase.query.filter_by(user_id=user.id).delete()
+            Sale.query.filter_by(user_id=user.id).delete()
+            Cashbook.query.filter_by(user_id=user.id).delete()
+            Bankbook.query.filter_by(user_id=user.id).delete()
+            Item.query.filter_by(user_id=user.id).delete()
+            Party.query.filter_by(user_id=user.id).delete()
+            db.session.commit()
+
             # Create parties for this user
             user_parties = []
             for i, party_name in enumerate(party_names.get(user.username, ['Sample Party'])):
@@ -252,7 +261,7 @@ def create_sample_data():
                 )
                 db.session.add(cashbook_entry)
             
-            print(f"✅ Created for {user.username}:")
+            print(f"Created for {user.username}:")
             print(f"   - {len(user_parties)} parties")
             print(f"   - {len(user_items)} items")
             print(f"   - 10 purchases")
@@ -262,8 +271,8 @@ def create_sample_data():
         # Commit all changes
         db.session.commit()
         
-        print("\n🎉 Sample data creation completed!")
-        print("\n📋 Login Credentials:")
+        print("\nSample data creation completed!")
+        print("\nLogin Credentials:")
         print("=" * 50)
         for user_data in users_data:
             print(f"Username: {user_data['username']}")
@@ -271,8 +280,8 @@ def create_sample_data():
             print(f"Company: {user_data['company_name']}")
             print("-" * 30)
         
-        print("\n🚀 You can now start the server and test the multi-user system!")
-        print("   Each user will see only their own data.")
+        print("\nYou can now start the server and test the multi-user system!")
+        print("Each user will see only their own data.")
 
 if __name__ == '__main__':
     create_sample_data() 

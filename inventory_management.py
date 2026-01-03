@@ -24,28 +24,50 @@ class InventoryManagementSystem:
     def add_inventory_item(self, user_id: int, item_data: Dict) -> Dict:
         """Add new inventory item"""
         try:
+            # Normalize incoming payload keys
+            normalized = {
+                'item_code': item_data.get('item_code') or item_data.get('it_cd'),
+                'item_name': item_data.get('item_name') or item_data.get('it_nm'),
+                'unit': item_data.get('unit', 'KG'),
+                'rate': float(item_data.get('rate') or item_data.get('opening_rate') or 0),
+                'category': item_data.get('category', ''),
+                'size': item_data.get('size', ''),
+                'mrp': float(item_data.get('mrp') or 0),
+                'sale_price': float(item_data.get('sale_price') or 0),
+                'tax_percentage': float(item_data.get('tax_percentage') or item_data.get('gst_rate') or 0),
+                'hsn_code': item_data.get('hsn_code') or item_data.get('hsn') or '',
+                'gst_rate': float(item_data.get('gst_rate') or item_data.get('tax_percentage') or 0),
+                'reorder_level': float(item_data.get('reorder_level') or item_data.get('min_stock') or 0),
+                'opening_stock': float(item_data.get('opening_stock') or item_data.get('opening_qty') or 0),
+            }
+
+            if not normalized['item_code']:
+                return {'success': False, 'error': 'Item code is required'}
+            if not normalized['item_name']:
+                return {'success': False, 'error': 'Item name is required'}
+
             # Check if item code already exists
-            existing_item = Item.query.filter_by(it_cd=item_data['item_code'], user_id=user_id).first()
+            existing_item = Item.query.filter_by(it_cd=normalized['item_code'], user_id=user_id).first()
             if existing_item:
-                return {'success': False, 'error': f"Item with code {item_data['item_code']} already exists"}
+                return {'success': False, 'error': f"Item with code {normalized['item_code']} already exists"}
             
             # Create new item
             new_item = Item(
                 user_id=user_id,
-                it_cd=item_data['item_code'],
-                it_nm=item_data['item_name'],
-                unit=item_data.get('unit', 'KG'),
-                rate=float(item_data.get('rate', 0)),
-                category=item_data.get('category', ''),
-                it_size=item_data.get('size', ''),
-                mrp=float(item_data.get('mrp', 0)),
-                sprc=float(item_data.get('sale_price', 0)),
-                taxpr=float(item_data.get('tax_percentage', 0)),
-                hsn=item_data.get('hsn_code', ''),
-                gst=float(item_data.get('gst_rate', 0)),
-                reorder_level=float(item_data.get('reorder_level', 0)),
-                opening_stock=float(item_data.get('opening_stock', 0)),
-                closing_stock=float(item_data.get('opening_stock', 0))  # Initially same as opening
+                it_cd=normalized['item_code'],
+                it_nm=normalized['item_name'],
+                unit=normalized.get('unit', 'KG'),
+                rate=float(normalized.get('rate', 0)),
+                category=normalized.get('category', ''),
+                it_size=normalized.get('size', ''),
+                mrp=float(normalized.get('mrp', 0)),
+                sprc=float(normalized.get('sale_price', 0)),
+                taxpr=float(normalized.get('tax_percentage', 0)),
+                hsn=normalized.get('hsn_code', ''),
+                gst=float(normalized.get('gst_rate', 0)),
+                reorder_level=float(normalized.get('reorder_level', 0)),
+                opening_stock=float(normalized.get('opening_stock', 0)),
+                closing_stock=float(normalized.get('opening_stock', 0))  # Initially same as opening
             )
             
             db.session.add(new_item)
@@ -53,8 +75,8 @@ class InventoryManagementSystem:
             
             return {
                 'success': True,
-                'message': f'Item {item_data["item_name"]} added successfully',
-                'item_code': item_data['item_code']
+                'message': f"Item {normalized['item_name']} added successfully",
+                'item_code': normalized['item_code']
             }
             
         except Exception as e:
@@ -562,6 +584,19 @@ class InventoryManagementSystem:
         except Exception as e:
             return 0
     
+    def get_next_item_code(self, user_id: int) -> str:
+        """Generate the next sequential item code"""
+        try:
+            items = Item.query.filter_by(user_id=user_id).all()
+            max_num = 0
+            for it in items:
+                digits = ''.join(ch for ch in (it.it_cd or '') if ch.isdigit())
+                if digits.isdigit():
+                    max_num = max(max_num, int(digits))
+            return f"I{max_num + 1:03d}"
+        except Exception:
+            return "I001"
+
     def get_categories(self, user_id: int) -> Dict:
         """Get all item categories"""
         try:

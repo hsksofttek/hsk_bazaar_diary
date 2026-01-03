@@ -18,6 +18,7 @@
         }
         
         body {
+            overflow-x: hidden;
             background-color: var(--light-bg);
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
@@ -281,7 +282,7 @@
                                             <input type="text" class="form-control" id="filterItem" placeholder="Item name or code">
                                         </div>
                                         <div class="col-md-3">
-                                            <button class="btn btn-primary w-100" onclick="loadInventoryList()">
+                                            <button class="btn btn-primary w-100" onclick="loadInventoryList(true)">
                                                 <i class="fas fa-search me-2"></i>Filter
                                             </button>
                                         </div>
@@ -520,6 +521,58 @@
         </div>
     </div>
 
+
+    <!-- Inventory Item Modal -->
+    <div class="modal fade" id="inventoryItemModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="inventoryModalTitle">Inventory Item</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form id="inventoryModalForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Item Code</label>
+                  <input type="text" class="form-control" id="modalItemCode" readonly>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Item Name</label>
+                  <input type="text" class="form-control" id="modalItemName" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Category</label>
+                  <input type="text" class="form-control" id="modalItemCategory">
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Unit</label>
+                  <input type="text" class="form-control" id="modalItemUnit">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Rate</label>
+                  <input type="number" step="0.01" class="form-control" id="modalItemRate">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Reorder Level</label>
+                  <input type="number" step="0.01" class="form-control" id="modalReorderLevel">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">GST (%)</label>
+                  <input type="number" step="0.01" class="form-control" id="modalGstRate">
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="inventoryModalSave">Save changes</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Success/Error Alerts -->
     <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
         <div id="alertContainer"></div>
@@ -531,13 +584,26 @@
         let currentPage = 1;
         let totalPages = 1;
         let inventoryData = [];
+        let inventoryModal;
+        let currentModalItemCode = '';
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            inventoryModal = new bootstrap.Modal(document.getElementById('inventoryItemModal'));
             loadStatistics();
-            loadInventoryList();
+            loadInventoryList(true);
             loadCategories();
             setDefaultDates();
+            loadNextItemCode();
+            const filterInput = document.getElementById('filterItem');
+            if (filterInput) {
+                filterInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        loadInventoryList(true);
+                    }
+                });
+            }
         });
 
         // Set default dates for filters
@@ -565,6 +631,21 @@
             } catch (error) {
                 console.error('Error loading statistics:', error);
                 showAlert('Error loading statistics', 'danger');
+            }
+        }
+
+        async function loadNextItemCode() {
+            try {
+                const res = await fetch('/api/inventory/next-code');
+                const data = await res.json();
+                if (data.success && data.item_code) {
+                    const input = document.getElementById('itemCode');
+                    if (input && !input.value) {
+                        input.value = data.item_code;
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching next item code', err);
             }
         }
 
@@ -633,7 +714,7 @@
                     showAlert('Inventory item added successfully!', 'success');
                     document.getElementById('addItemForm').reset();
                     loadStatistics();
-                    loadInventoryList();
+                    loadInventoryList(true);
                     loadCategories();
                 } else {
                     showAlert(result.error || 'Error adding inventory item', 'danger');
@@ -645,8 +726,10 @@
         });
 
         // Load inventory list
-        async function loadInventoryList() {
+        async function loadInventoryList(reset = false) {
             try {
+                if (reset) { currentPage = 1; }
+
                 const category = document.getElementById('filterCategory').value;
                 const status = document.getElementById('filterStatus').value;
                 const searchItem = document.getElementById('filterItem').value;
@@ -674,6 +757,35 @@
                 console.error('Error loading inventory list:', error);
                 showAlert('Error loading inventory list', 'danger');
             }
+        }
+
+        function updatePagination(totalCount, limit) {
+            totalPages = Math.max(1, Math.ceil(totalCount / (limit || 1)));
+            const pagination = document.getElementById('inventoryPagination');
+            if (!pagination) return;
+            const prevDisabled = currentPage <= 1 ? 'disabled' : '';
+            const nextDisabled = currentPage >= totalPages ? 'disabled' : '';
+            let html = `
+                <li class=\"page-item ${prevDisabled}\"><a class=\"page-link\" href=\"#\" data-page=\"${currentPage - 1}\">Previous</a></li>
+            `;
+            const maxPagesToShow = 5;
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+            for (let p = startPage; p <= endPage; p++) {
+                html += `<li class=\"page-item ${p === currentPage ? 'active' : ''}\"><a class=\"page-link\" href=\"#\" data-page=\"${p}\">${p}</a></li>`;
+            }
+            html += `<li class=\"page-item ${nextDisabled}\"><a class=\"page-link\" href=\"#\" data-page=\"${currentPage + 1}\">Next</a></li>`;
+            pagination.innerHTML = html;
+            pagination.querySelectorAll('a.page-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetPage = Number(link.dataset.page);
+                    if (targetPage >= 1 && targetPage <= totalPages && targetPage !== currentPage) {
+                        currentPage = targetPage;
+                        loadInventoryList(true);
+                    }
+                });
+            });
         }
 
         // Display inventory list
@@ -711,13 +823,114 @@
             }).join('');
         }
 
-        // Placeholder functions
-        function viewItem(itemCode) {
-            showAlert(`Viewing item ${itemCode}`, 'info');
+        // Item actions
+        function setModalReadonly(readonly) {
+            ['modalItemName','modalItemCategory','modalItemUnit','modalItemRate','modalReorderLevel','modalGstRate'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) { el.readOnly = readonly; }
+            });
+            const codeInput = document.getElementById('modalItemCode');
+            if (codeInput) codeInput.readOnly = true;
         }
 
-        function editItem(itemCode) {
-            showAlert(`Editing item ${itemCode}`, 'info');
+        function populateModal(item) {
+            document.getElementById('modalItemCode').value = item.item_code || item.it_cd || '';
+            document.getElementById('modalItemName').value = item.item_name || item.it_nm || '';
+            document.getElementById('modalItemCategory').value = item.category || '';
+            document.getElementById('modalItemUnit').value = item.unit || '';
+            document.getElementById('modalItemRate').value = Number(item.rate || 0);
+            document.getElementById('modalReorderLevel').value = Number(item.reorder_level || 0);
+            document.getElementById('modalGstRate').value = Number(item.gst_rate || item.tax_percentage || 0);
+        }
+
+        async function fetchItemDetails(itemCode) {
+            try {
+                const res = await fetch(`/api/inventory/item/${encodeURIComponent(itemCode)}`);
+                const data = await res.json();
+                if (!data.success) {
+                    showAlert(data.error || 'Item not found', 'danger');
+                    return null;
+                }
+                return data.item;
+            } catch (err) {
+                console.error(err);
+                showAlert('Error loading item', 'danger');
+                return null;
+            }
+        }
+
+        async function viewItem(itemCode) {
+            const item = await fetchItemDetails(itemCode);
+            if (!item) return;
+            currentModalItemCode = item.item_code || item.it_cd;
+            document.getElementById('inventoryModalTitle').textContent = `View Item ${currentModalItemCode}`;
+            populateModal(item);
+            setModalReadonly(true);
+            document.getElementById('inventoryModalSave').classList.add('d-none');
+            inventoryModal.show();
+        }
+
+        async function editItem(itemCode) {
+            const item = await fetchItemDetails(itemCode);
+            if (!item) return;
+            currentModalItemCode = item.item_code || item.it_cd;
+            document.getElementById('inventoryModalTitle').textContent = `Edit Item ${currentModalItemCode}`;
+            populateModal(item);
+            setModalReadonly(false);
+            const saveBtn = document.getElementById('inventoryModalSave');
+            saveBtn.classList.remove('d-none');
+            saveBtn.onclick = saveItemUpdate;
+            inventoryModal.show();
+        }
+
+        async function saveItemUpdate() {
+            if (!currentModalItemCode) return;
+            const payload = {
+                item_name: document.getElementById('modalItemName').value,
+                category: document.getElementById('modalItemCategory').value,
+                unit: document.getElementById('modalItemUnit').value,
+                rate: parseFloat(document.getElementById('modalItemRate').value) || 0,
+                reorder_level: parseFloat(document.getElementById('modalReorderLevel').value) || 0,
+                gst_rate: parseFloat(document.getElementById('modalGstRate').value) || 0,
+                tax_percentage: parseFloat(document.getElementById('modalGstRate').value) || 0
+            };
+            try {
+                const res = await fetch(`/api/inventory/item/${encodeURIComponent(currentModalItemCode)}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Item updated successfully', 'success');
+                    inventoryModal.hide();
+                    loadInventoryList(true);
+                    loadStatistics();
+                } else {
+                    showAlert(data.error || 'Error updating item', 'danger');
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('Error updating item', 'danger');
+            }
+        }
+
+        async function deleteItem(itemCode) {
+            if (!confirm(`Are you sure you want to delete item ${itemCode}?`)) return;
+            try {
+                const res = await fetch(`/api/inventory/item/${encodeURIComponent(itemCode)}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) {
+                    showAlert('Item deleted successfully', 'success');
+                    loadInventoryList(true);
+                    loadStatistics();
+                } else {
+                    showAlert(data.error || 'Error deleting item', 'danger');
+                }
+            } catch (err) {
+                console.error(err);
+                showAlert('Error deleting item', 'danger');
+            }
         }
 
         async function loadStockMovements() {

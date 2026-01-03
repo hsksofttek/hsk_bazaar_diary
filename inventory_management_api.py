@@ -41,6 +41,40 @@ def add_inventory_item():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@inventory_management_api.route('/api/inventory/item/<item_code>', methods=['GET'])
+@login_required
+def get_inventory_item(item_code):
+    """Fetch a single inventory item"""
+    try:
+        result = ims.get_inventory_item(current_user.id, item_code)
+        status_code = 200 if result.get('success') else 404
+        return jsonify(result), status_code
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@inventory_management_api.route('/api/inventory/item/<item_code>', methods=['PUT'])
+@login_required
+def update_inventory_item(item_code):
+    """Update an inventory item"""
+    try:
+        data = request.get_json() or {}
+        result = ims.update_inventory_item(current_user.id, item_code, data)
+        status_code = 200 if result.get('success') else 400
+        return jsonify(result), status_code
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@inventory_management_api.route('/api/inventory/item/<item_code>', methods=['DELETE'])
+@login_required
+def delete_inventory_item(item_code):
+    """Delete an inventory item"""
+    try:
+        result = ims.delete_inventory_item(current_user.id, item_code)
+        status_code = 200 if result.get('success') else 404
+        return jsonify(result), status_code
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @inventory_management_api.route('/api/inventory/stock', methods=['POST'])
 @login_required
 def update_stock():
@@ -152,7 +186,7 @@ def get_inventory_list():
                 'current_rate': float(entry.get('rate', 0)),
                 'current_value': float(entry.get('stock_value', 0)),
                 'min_stock': float(entry.get('reorder_level', 0)),
-                'status': 'ACTIVE' if entry.get('current_stock', 0) > 0 else 'INACTIVE'
+                'status': entry.get('status') or ('ACTIVE' if entry.get('current_stock', 0) > 0 else 'INACTIVE')
             })
 
         pagination = result.get('pagination', {})
@@ -161,10 +195,12 @@ def get_inventory_list():
         return jsonify({
             'success': True,
             'items': items,
+            'inventory': items,
             'total_count': total_count,
             'limit': limit,
             'offset': offset,
-            'has_more': (offset + limit) < total_count if limit else False
+            'has_more': (offset + limit) < total_count if limit else False,
+            'pagination': pagination
         }), 200
         
     except Exception as e:
@@ -234,7 +270,7 @@ def get_inventory_statistics():
         
         statistics = {
             'summary': summary_result['summary'],
-            'low_stock_alerts': alerts_result['count'],
+            'low_stock_alerts': alerts_result.get('alert_count', alerts_result.get('count', 0)),
             'today_movements': today_movements,
             'top_items': top_items
         }
@@ -255,3 +291,13 @@ def not_found(error):
 @inventory_management_api.errorhandler(500)
 def internal_error(error):
     return jsonify({'success': False, 'error': 'Internal server error'}), 500 
+@inventory_management_api.route('/api/inventory/next-code', methods=['GET'])
+@login_required
+def get_next_item_code():
+    """Get the next suggested item code"""
+    try:
+        code = ims.get_next_item_code(current_user.id)
+        return jsonify({'success': True, 'item_code': code}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+

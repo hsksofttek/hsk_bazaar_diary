@@ -206,6 +206,27 @@ def get_next_bill_number():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
 
+@purchase_management_api.route('/api/purchase/<int:bill_no>', methods=['PUT'])
+@login_required
+def update_purchase_entry(bill_no):
+    """Update purchase entry (notes, terms, delivery date)"""
+    try:
+        data = request.get_json() or {}
+        result = pms.update_purchase_entry(current_user.id, bill_no, data)
+        return jsonify(result), 200 if result.get('success') else 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@purchase_management_api.route('/api/purchase/<int:bill_no>', methods=['DELETE'])
+@login_required
+def delete_purchase_entry(bill_no):
+    """Delete a purchase entry"""
+    try:
+        result = pms.delete_purchase_entry(current_user.id, bill_no)
+        return jsonify(result), 200 if result.get('success') else 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # Error handlers
 @purchase_management_api.errorhandler(404)
 def not_found(error):

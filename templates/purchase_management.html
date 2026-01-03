@@ -923,8 +923,32 @@ function viewPurchase(billNo) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log('Purchase details:', data);
-                alert('View functionality to be implemented');
+                const purchase = data.purchase;
+                const items = purchase.items || [];
+                const rows = items.map(item => `
+                    <tr>
+                        <td>${item.item_code}</td>
+                        <td>${item.item_name}</td>
+                        <td>${item.quantity}</td>
+                        <td>${item.rate}</td>
+                        <td>${item.net_amount}</td>
+                    </tr>
+                `).join('');
+                const body = `
+                    <p><strong>Bill No:</strong> ${purchase.bill_no}</p>
+                    <p><strong>Bill Date:</strong> ${purchase.bill_date}</p>
+                    <p><strong>Supplier:</strong> ${purchase.party_code} - ${purchase.party_name}</p>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead><tr><th>Item</th><th>Name</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                    <p class="mt-2"><strong>Total:</strong> ₹${purchase.total_amount.toFixed(2)} | <strong>Grand:</strong> ₹${purchase.grand_total.toFixed(2)}</p>
+                    <p><strong>Payment Terms:</strong> ${purchase.payment_terms || '-'}</p>
+                    <p><strong>Notes:</strong> ${purchase.notes || '-'}</p>
+                `;
+                showPurchaseModal('Purchase Details', body, '');
             } else {
                 alert('Error: ' + data.error);
             }
@@ -936,13 +960,93 @@ function viewPurchase(billNo) {
 }
 
 function editPurchase(billNo) {
-    alert('Edit functionality to be implemented');
+    fetch(`/api/purchase/${billNo}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            const p = data.purchase;
+            const body = `
+                <form id="purchaseEditForm">
+                    <div class="mb-3">
+                        <label class="form-label">Delivery Date</label>
+                        <input type="date" class="form-control" name="delivery_date" value="${p.delivery_date || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Payment Terms</label>
+                        <input type="text" class="form-control" name="payment_terms" value="${p.payment_terms || ''}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes">${p.notes || ''}</textarea>
+                    </div>
+                </form>
+            `;
+            const footer = `
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="savePurchaseEdit(${billNo})">Save</button>
+            `;
+            showPurchaseModal('Edit Purchase', body, footer);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error loading purchase for edit');
+        });
+}
+
+function savePurchaseEdit(billNo) {
+    const form = document.getElementById('purchaseEditForm');
+    const payload = {
+        delivery_date: form.delivery_date.value,
+        payment_terms: form.payment_terms.value,
+        notes: form.notes.value
+    };
+    fetch(`/api/purchase/${billNo}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(r => r.json())
+      .then(res => {
+        if (res.success) {
+            bootstrap.Modal.getInstance(document.getElementById('purchaseActionModal')).hide();
+            loadPurchases();
+        } else {
+            alert(res.error || 'Error updating purchase');
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Error updating purchase');
+      });
 }
 
 function deletePurchase(billNo) {
     if (confirm('Are you sure you want to delete this purchase entry?')) {
-        alert('Delete functionality to be implemented');
+        fetch(`/api/purchase/${billNo}`, { method: 'DELETE' })
+            .then(r => r.json())
+            .then(res => {
+                if (res.success) {
+                    loadPurchases();
+                } else {
+                    alert(res.error || 'Error deleting purchase');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error deleting purchase');
+            });
     }
+}
+
+function showPurchaseModal(title, bodyHtml, footerHtml) {
+    const modal = document.getElementById('purchaseActionModal');
+    modal.querySelector('.modal-title').innerHTML = title;
+    modal.querySelector('.modal-body').innerHTML = bodyHtml;
+    const footer = modal.querySelector('.modal-footer');
+    footer.innerHTML = footerHtml ? footerHtml : '<button class="btn btn-secondary" data-bs-dismiss="modal">Close</button>';
+    new bootstrap.Modal(modal).show();
 }
 
 function exportData() {

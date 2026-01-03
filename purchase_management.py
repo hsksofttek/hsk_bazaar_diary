@@ -209,6 +209,8 @@ class PurchaseManagementSystem:
         try:
             purchases = Purchase.query.filter_by(user_id=user_id, bill_no=bill_no).all()
             if not purchases:
+                purchases = Purchase.query.filter_by(bill_no=bill_no).all()
+            if not purchases:
                 return {'success': False, 'error': 'Purchase entry not found'}
             
             # Update basic fields
@@ -231,6 +233,8 @@ class PurchaseManagementSystem:
         """Delete purchase entry"""
         try:
             purchases = Purchase.query.filter_by(user_id=user_id, bill_no=bill_no).all()
+            if not purchases:
+                purchases = Purchase.query.filter_by(bill_no=bill_no).all()
             if not purchases:
                 return {'success': False, 'error': 'Purchase entry not found'}
             
