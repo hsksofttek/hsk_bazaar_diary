@@ -718,3 +718,18 @@ def sales_export():
     except Exception as e:
         print(f"Error exporting sales: {e}")
         return jsonify({'success': False, 'message': f'Error exporting sales: {str(e)}'}), 500 
+
+
+# Detail fetch fallback for modern Sales Management
+@sales_api.route('/api/sales/<int:bill_no>', methods=['GET'])
+@login_required
+def sales_detail_fallback(bill_no):
+    """Return sale details for given bill number (current user)."""
+    try:
+        from sales_management import SalesManagementSystem
+        sms = SalesManagementSystem()
+        result = sms.get_sales_entry(current_user.id, bill_no)
+        status = 200 if result.get('success') else 404
+        return jsonify(result), status
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

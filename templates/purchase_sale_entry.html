@@ -134,7 +134,8 @@
                             <label class="form-label enhanced-label">
                                 <i class="fas fa-user-tie me-1"></i>Party Name
                             </label>
-                            <input type="text" class="form-control enhanced-input" id="salePartyName" name="salePartyName" readonly>
+                            <input type="text" class="form-control enhanced-input" id="salePartyName" name="salePartyName" list="partyNameList">
+                            <datalist id="partyNameList"></datalist>
                         </div>
                         <div class="col-md-1">
                             <label class="form-label enhanced-label">
@@ -219,10 +220,10 @@
                                 <span class="shortcut-item">←</span> - Edit 
                                 <span class="shortcut-item">F5</span> - Order 
                                 <span class="shortcut-item">F6</span> - Find 
-                                <span class="shortcut-item">F7</span> - Sale 
-                                <span class="shortcut-item">F8</span> - Adjwt 
-                                <span class="shortcut-item">F9</span> - Rt. 
-                                <span class="shortcut-item">F10</span> - Spt
+                                <span class="shortcut-item">F7</span> - Save Sales 
+                                <span class="shortcut-item">F8</span> - New Purchase 
+                                <span class="shortcut-item">F9</span> - Recalc Amount 
+                                <span class="shortcut-item">F10</span> - Clear Sale
                     </small>
                         </div>
                         <div class="col-md-4 text-end">
@@ -450,7 +451,8 @@ function updateLiveStats() {
         document.getElementById('totalBags').textContent = totalBags;
         
         // Get live sale and balance values from the purchase table row
-        const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${selectedPurchase.id}"]`);
+        const selId = selectedPurchase.id || selectedPurchase.bill_no;
+        const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${selId}"]`);
         if (selectedRow) {
             const cells = selectedRow.cells;
             // Sale column (index 6) and Balance column (index 7)
@@ -487,6 +489,38 @@ function getSelectedPurchase() {
     return null;
 }
 
+function populatePartyDatalist() {
+    const dl = document.getElementById('partyNameList');
+    if (!dl) return;
+    dl.innerHTML = '';
+    parties.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.party_nm || p.party_name || p.party_cd || '';
+        opt.dataset.code = p.party_cd || '';
+        dl.appendChild(opt);
+    });
+}
+
+function handlePartyNameInput(e) {
+    const val = e.target.value;
+    const codeField = document.getElementById('salePartyCode');
+    if (!val) {
+        codeField.value = '';
+        return;
+    }
+    // Only fill when exact match to an existing party name
+    const match = parties.find(p => {
+        const name = p.party_nm || p.party_name || '';
+        return name.toLowerCase() === val.toLowerCase();
+    });
+    if (match) {
+        codeField.value = match.party_cd || '';
+        e.target.value = match.party_nm || match.party_name || val;
+    } else {
+        codeField.value = '';
+    }
+}
+
 function setupEventListeners() {
     // Sale party code field click to open search
     document.getElementById('salePartyCode').addEventListener('click', function() {
@@ -502,6 +536,10 @@ function setupEventListeners() {
     document.getElementById('purchaseItemCode').addEventListener('click', function() {
         openItemSearch();
     });
+
+    // Party name typeahead
+    const partyNameInput = document.getElementById('salePartyName');
+    if (partyNameInput) { partyNameInput.addEventListener('input', handlePartyNameInput); }
 
     // Party search input
     document.getElementById('partySearchInput').addEventListener('input', function() {
@@ -676,7 +714,7 @@ function setupKeyboardShortcuts() {
                 break;
             case 'F7':
                 e.preventDefault();
-                saveSale();
+                saveAllSales();
                 break;
             case 'F8':
                 e.preventDefault();
@@ -695,16 +733,17 @@ function setupKeyboardShortcuts() {
 }
 
 function loadParties() {
-    fetch('/api/parties')
+    fetch('/api/parties/list')
         .then(response => response.json())
         .then(data => {
             parties = data.parties || [];
+            populatePartyDatalist();
         })
         .catch(error => console.error('Error loading parties:', error));
 }
 
 function loadItems() {
-    fetch('/api/items')
+    fetch('/api/items/list')
         .then(response => response.json())
         .then(data => {
             items = data.items || [];
@@ -714,11 +753,27 @@ function loadItems() {
 
 function loadPurchases() {
     console.log('Loading purchases...');
-    fetch('/api/purchases')
+    fetch('/api/purchase/list?per_page=200')
         .then(response => response.json())
         .then(data => {
             console.log('Purchases loaded:', data);
-            purchases = data.purchases || [];
+            const rawList = (data.purchases || data.items || data.inventory || []);
+            purchases = rawList.map(p => ({
+                id: (p && (p.id ?? p.bill_no)) || null,
+                bill_no: p.bill_no,
+                bill_date: p.bill_date,
+                party_cd: p.party_cd || p.party_code,
+                party_code: p.party_code,
+                party_nm: p.party_nm || p.party_name,
+                party_name: p.party_name,
+                it_cd: p.it_cd || p.item_code,
+                item_code: p.item_code,
+                it_nm: p.it_nm || p.item_name,
+                item_name: p.item_name,
+                qty: p.qty || 0,
+                sold_bags: p.sold_bags || 0,
+                rate: p.rate || 0
+            })).filter(p => p.bill_no);
             displayPurchases();
         })
         .catch(error => {
@@ -735,79 +790,45 @@ function displayPurchases() {
         return;
     }
     tbody.innerHTML = '';
-    
-    let displayIndex = 0; // Counter for displayed rows
-        
-    let availablePurchases = 0; // Counter for available purchases
-    
+    let displayIndex = 0;
+    let availablePurchases = 0;
     purchases.forEach((purchase, index) => {
-        // Calculate sale and balance (balance = remaining bags available for sale)
-        const totalBags = purchase.qty || 0;
-        const soldBags = purchase.sold_bags || 0;
+        const pid = purchase.id || purchase.bill_no;
+        const totalBags = Number(purchase.qty || 0);
+        const soldBags = Number(purchase.sold_bags || 0);
         const balance = totalBags - soldBags;
-        
-        // Skip records where balance is 0 or negative (no bags left to sell)
         if (balance <= 0) {
-            console.log(`Skipping purchase ${purchase.id} - balance is ${balance} (no bags left to sell)`);
+            console.log(`Skipping purchase ${pid} - balance is ${balance} (no bags left to sell)`);
             return;
         }
-        
         availablePurchases++;
-        
         const row = tbody.insertRow();
-        
-        // Alternate row colors like FoxPro
-        if (displayIndex % 2 === 0) {
-            row.className = 'table-primary';
-        } else {
-            row.className = 'table-secondary';
-        }
-        
-        // Add data attribute for real-time updates
-        row.setAttribute('data-purchase-id', purchase.id);
-        
+        row.className = (displayIndex % 2 === 0) ? 'table-primary' : 'table-secondary';
+        row.setAttribute('data-purchase-id', pid);
+        const billDate = purchase.bill_date ? new Date(purchase.bill_date).toISOString().split('T')[0] : '';
         row.innerHTML = `
             <td>${displayIndex + 1}</td>
-            <td>${new Date(purchase.bill_date).toLocaleDateString()}</td>
-            <td>${purchase.party_cd || 'N/A'}</td>
-            <td>${purchase.party_nm || 'Unknown'}</td>
-            <td>${purchase.it_nm || 'Unknown'}</td>
+            <td>${billDate}</td>
+            <td>${purchase.party_cd || purchase.party_code || 'N/A'}</td>
+            <td>${purchase.party_nm || purchase.party_name || 'Unknown'}</td>
+            <td>${purchase.it_nm || purchase.item_name || 'Unknown'}</td>
             <td>${totalBags}</td>
             <td>${soldBags}</td>
             <td>${balance}</td>
             <td>
-                <button class="btn btn-sm btn-success" onclick="selectPurchase(${purchase.id})">
+                <button class="btn btn-sm btn-success" onclick="selectPurchase('${pid}')">
                     <i class="fas fa-check"></i> Select
                 </button>
             </td>
         `;
-        
-        displayIndex++; // Increment counter for next row
-        
-        // Add click functionality to the entire row for mobile
+        displayIndex++;
         row.style.cursor = 'pointer';
         row.addEventListener('click', function(e) {
-            // Don't trigger if clicking on the button
             if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
-                selectPurchase(purchase.id);
+                selectPurchase(pid);
             }
         });
-        
-        // Add hover effect
-        row.addEventListener('mouseenter', function() {
-            this.style.backgroundColor = '#f8f9fa';
-        });
-        
-        row.addEventListener('mouseleave', function() {
-            this.style.backgroundColor = '';
-        });
-        
-        // Make row clickable for editing
-        row.style.cursor = 'pointer';
-        row.onclick = () => selectPurchase(purchase.id);
     });
-    
-    // Show message if no purchases are available
     if (availablePurchases === 0) {
         const row = tbody.insertRow();
         row.innerHTML = `
@@ -818,48 +839,34 @@ function displayPurchases() {
         `;
     }
 }
-
 function selectPurchase(purchaseId) {
     currentPurchaseId = purchaseId;
-    selectedPurchaseEntry = purchases.find(p => p.id === purchaseId);
+    selectedPurchaseEntry = purchases.find(p => (p.id || p.bill_no) == purchaseId);
     
     if (selectedPurchaseEntry) {
-        // Remove previous selection highlighting
         document.querySelectorAll('#purchaseTableBody tr').forEach(row => {
             row.classList.remove('purchase-row-selected');
         });
-        
-        // Add highlighting to selected row
         const selectedRow = document.querySelector(`#purchaseTableBody tr[data-purchase-id="${purchaseId}"]`);
         if (selectedRow) {
             selectedRow.classList.add('purchase-row-selected');
         }
-        
-        // Fill header fields with purchase data
+        const billDateIso = selectedPurchaseEntry.bill_date ? new Date(selectedPurchaseEntry.bill_date).toISOString().split('T')[0] : '';
         document.getElementById('saleBillNo').value = selectedPurchaseEntry.bill_no || '';
-        document.getElementById('saleDate').value = new Date(selectedPurchaseEntry.bill_date).toLocaleDateString();
-        document.getElementById('salePartyCode').value = selectedPurchaseEntry.party_cd || '';
-        document.getElementById('salePartyName').value = selectedPurchaseEntry.party_nm || '';
-        
-        // Calculate available bags
+        document.getElementById('saleDate').value = billDateIso || document.getElementById('saleDate').value;
+        document.getElementById('salePartyCode').value = selectedPurchaseEntry.party_cd || selectedPurchaseEntry.party_code || '';
+        document.getElementById('salePartyName').value = selectedPurchaseEntry.party_nm || selectedPurchaseEntry.party_name || '';
         const totalBags = selectedPurchaseEntry.qty || 0;
         const soldBags = selectedPurchaseEntry.sold_bags || 0;
         const availableBags = totalBags - soldBags;
-        
-        // Update max bags display
         const maxBagsElement = document.getElementById('maxBags');
         if (maxBagsElement) {
             maxBagsElement.textContent = availableBags;
         }
-        
-        // Clear existing sale entries
         saleEntries = [];
         currentSaleEntryId = 1;
         displaySaleEntries();
-        
-        // Update live stats in header
         updateLiveStats();
-        
         showAlert(`Purchase ${purchaseId} selected! Available bags: ${availableBags}`, 'success');
     }
 }
@@ -875,21 +882,23 @@ function addNewPurchase() {
 
 function savePurchase() {
     const formData = new FormData(document.getElementById('purchaseForm'));
-    
     const data = {
         bill_no: parseInt(formData.get('purchaseBillNo')),
         bill_date: formData.get('purchaseDate'),
         party_cd: formData.get('purchasePartyCode'),
-        it_cd: formData.get('purchaseItemCode'),
-        qty: parseFloat(formData.get('purchaseBags')),
-        tot_smt: parseFloat(formData.get('purchaseWeight')),
-        rate: parseFloat(formData.get('purchaseRate')),
-        sal_amt: parseFloat(formData.get('purchaseAmount')),
-        tot_amt: parseFloat(formData.get('purchaseAmount')),
+        party_id: formData.get('purchasePartyCode'),
+        total_amount: parseFloat(formData.get('purchaseAmount')) || 0,
+        tax_amount: 0,
+        discount_amount: 0,
+        items: [{
+            item_code: formData.get('purchaseItemCode'),
+            quantity: parseFloat(formData.get('purchaseBags')) || 0,
+            rate: parseFloat(formData.get('purchaseRate')) || 0,
+            weight: parseFloat(formData.get('purchaseWeight')) || 0
+        }],
         remark: 'Purchase entry'
     };
-    
-    fetch('/api/purchases', {
+    fetch('/api/purchase/entry', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1160,68 +1169,61 @@ function clearHeaderFields() {
     updateRealTimeSaleBalance();
 }
 
+function saveSale() {
+    return saveAllSales();
+}
+
 function saveAllSales() {
     if (saleEntries.length === 0) {
         showAlert('No sale entries to save!', 'warning');
         return;
     }
-    
     if (!currentPurchaseId) {
         showAlert('Please select a purchase entry first!', 'warning');
         return;
     }
-    
-    // Get header values
     const billNo = parseInt(document.getElementById('saleBillNo').value);
-    const billDate = document.getElementById('saleDate').value;
-    
-    if (!billNo || !billDate) {
-        showAlert('Please fill Bill No and Date!', 'warning');
+    let billDate = document.getElementById('saleDate').value;
+    if (!billNo) {
+        showAlert('Please fill Bill No!', 'warning');
         return;
     }
-    
-    // Save all sale entries
+    if (!billDate) {
+        billDate = new Date().toISOString().split('T')[0];
+    }
     let savedCount = 0;
-    let totalEntries = saleEntries.length;
-    
-    saleEntries.forEach((entry, index) => {
-        const data = {
-            purchase_id: currentPurchaseId,
+    const totalEntries = saleEntries.length;
+    saleEntries.forEach((entry) => {
+        const itemCode = selectedPurchaseEntry ? (selectedPurchaseEntry.it_cd || selectedPurchaseEntry.item_code) : 'DEFAULT';
+        const payload = {
             bill_no: billNo,
             bill_date: billDate,
             party_cd: entry.partyCode,
-            it_cd: selectedPurchaseEntry ? selectedPurchaseEntry.it_cd : 'DEFAULT',
-            qty: entry.bags,
-            tot_smt: entry.weight,
-            rate: entry.rate,
-            sal_amt: entry.amount,
-            tot_amt: entry.amount,
-            remark: 'Sale entry'
+            items: [{ item_code: itemCode, quantity: entry.bags, rate: entry.rate }],
+            total_amount: entry.amount,
+            tax_amount: 0,
+            discount_amount: 0,
+            payment_terms: '',
+            order_no: currentPurchaseId
         };
-        
-        fetch('/api/sales', {
+        fetch('/api/sales/entry', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(data)
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
         })
         .then(response => response.json())
         .then(result => {
             savedCount++;
-            
             if (result.success) {
                 if (savedCount === totalEntries) {
                     showAlert(`All ${totalEntries} sale entries saved successfully!`, 'success');
-                    loadPurchases(); // Refresh to update balances
+                    loadPurchases();
                     clearAllSaleData();
-                    
-                    // Auto-increment bill sequence
                     const currentSeq = parseInt(document.getElementById('saleBillSequence').value);
                     document.getElementById('saleBillSequence').value = currentSeq + 1;
                 }
             } else {
-                showAlert(`Failed to save sale entry ${entry.id}: ${result.message}`, 'error');
+                showAlert(`Failed to save sale entry ${entry.id}: ${result.message || result.error || 'Error'}`, 'error');
             }
         })
         .catch(error => {

@@ -61,6 +61,17 @@ def create_app():
     config_class = config_options.get(config_name, config_options['default'])
     app.config.from_object(config_class)
 
+    # Log DB configuration to help diagnose path issues during runtime
+    db_uri = app.config.get('SQLALCHEMY_DATABASE_URI')
+    if db_uri and db_uri.startswith('sqlite:///'):
+        db_path = db_uri.replace('sqlite:///', '', 1)
+        db_dir = os.path.dirname(db_path)
+        if db_dir and not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+        logger.info(f"Using SQLite DB at {db_path} (exists={os.path.exists(db_path)})")
+    else:
+        logger.info(f"Using DB URI: {db_uri}")
+
     # Harden secrets: warn and set minimal defaults if not provided
     secret_key = app.config.get('SECRET_KEY')
     if not secret_key or secret_key == 'your-secret-key-change-in-production':
@@ -85,6 +96,15 @@ def create_app():
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
     login_manager.login_message_category = 'info'
+
+    @login_manager.unauthorized_handler
+    def handle_unauthorized():
+        """Return JSON for API calls instead of HTML redirect when not authenticated."""
+        from flask import request, jsonify
+        if request.path.startswith('/api/'):
+            return jsonify({'success': False, 'error': 'Unauthorized'}), 401
+        return redirect(url_for('auth.login', next=request.url))
+
     
     @login_manager.user_loader
     def load_user(user_id):

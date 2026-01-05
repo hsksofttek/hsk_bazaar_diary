@@ -1,6 +1,9 @@
 import os
 from dotenv import load_dotenv
 
+BASEDIR = os.path.abspath(os.path.dirname(__file__))
+INSTANCE_DB = os.path.join(BASEDIR, 'instance', 'business_web.db')
+
 load_dotenv()
 
 class Config:
@@ -11,7 +14,8 @@ class Config:
 class DevelopmentConfig(Config):
     """Development configuration - SQLite"""
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///business_web.db'
+    # Use instance database where sample data is stored
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///' + INSTANCE_DB
 
 class ProductionConfig(Config):
     """Production configuration - PostgreSQL"""

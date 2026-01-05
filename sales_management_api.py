@@ -9,6 +9,11 @@ from flask_login import login_required, current_user
 from sales_management import SalesManagementSystem
 from datetime import datetime, date
 import json
+import logging
+
+
+# Module logger
+logger = logging.getLogger(__name__)
 
 # Create Blueprint
 sales_management_api = Blueprint('sales_management_api', __name__)
@@ -21,28 +26,50 @@ sms = SalesManagementSystem()
 def create_sales_entry():
     """Create a new sales entry with credit limit validation"""
     try:
-        data = request.get_json()
-        
-        if not data:
-            return jsonify({'success': False, 'error': 'No data provided'}), 400
-        
-        # Add user_id to data
-        data['user_id'] = current_user.id
-        
-        # Validate required fields
-        required_fields = ['bill_no', 'bill_date', 'party_cd', 'it_cd']
-        for field in required_fields:
-            if not data.get(field):
-                return jsonify({'success': False, 'error': f'Missing required field: {field}'}), 400
-        
-        # Create sales entry
-        result = sms.create_sales_entry(current_user.id, data)
-        
-        if result['success']:
-            return jsonify(result), 201
-        else:
-            return jsonify(result), 400
-            
+        data = request.get_json() or {}
+
+        # Normalize payload
+        party_cd = data.get('party_cd') or data.get('party_id')
+        bill_no = data.get('bill_no')
+        bill_date = data.get('bill_date')
+        items_payload = data.get('items')
+        if not items_payload:
+            # Build single-item payload from flat fields
+            item_code = data.get('it_cd') or data.get('item_code')
+            qty = data.get('qty') or data.get('quantity') or 0
+            rate = data.get('rate') or 0
+            items_payload = [{
+                'item_code': item_code,
+                'quantity': qty,
+                'rate': rate,
+                'discount': data.get('discount') or data.get('discount_amount') or 0
+            }]
+
+        # Basic validation
+        if not party_cd:
+            return jsonify({'success': False, 'error': 'Missing required field: party_cd'}), 400
+        if not items_payload or not items_payload[0].get('item_code'):
+            return jsonify({'success': False, 'error': 'Missing required field: item_code'}), 400
+        if not bill_no:
+            bill_no = data.get('bill_no') or sms._generate_bill_number(current_user.id)
+
+        result = sms.create_sales_entry(
+            user_id=current_user.id,
+            party_id=party_cd,
+            items=items_payload,
+            total_amount=data.get('total_amount', 0),
+            tax_amount=data.get('tax_amount', 0),
+            discount_amount=data.get('discount_amount', 0),
+            delivery_charges=data.get('delivery_charges', 0),
+            payment_terms=data.get('payment_terms', ''),
+            delivery_date=bill_date or data.get('delivery_date'),
+            notes=data.get('notes', ''),
+            order_no=data.get('order_no')
+        )
+
+        status = 201 if result.get('success') else 400
+        return jsonify(result), status
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -51,14 +78,15 @@ def create_sales_entry():
 def get_sales(bill_no):
     """Get sales details by bill number"""
     try:
-        result = sms.get_sales_by_bill_no(current_user.id, bill_no)
-        
-        if result['success']:
-            return jsonify(result), 200
-        else:
-            return jsonify(result), 404
-            
+        result = sms.get_sales_entry(current_user.id, bill_no)
+        if not result.get('success'):
+            logger.warning("Sale not found for user=%s bill=%s: %s", current_user.id, bill_no, result.get('error'))
+            fallback = sms.get_sales_entry(user_id=current_user.id, bill_no=bill_no)
+            result = fallback if fallback.get('success') else result
+        status = 200 if result.get('success') else 404
+        return jsonify(result), status
     except Exception as e:
+        logger.exception("Error fetching sale %s for user %s", bill_no, getattr(current_user, 'id', '?'))
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @sales_management_api.route('/api/sales/summary', methods=['GET'])

@@ -432,7 +432,7 @@ async function fetchNextBillNumber() {
 }
 
 function loadSalesTable() {
-    const params = new URLSearchParams({ page: 1, per_page: 50 });
+    const params = new URLSearchParams({ limit: 50, offset: 0 });
     const search = document.getElementById('searchInput')?.value;
     if (search) params.append('search', search);
     const date = document.getElementById('dateFilter')?.value;
@@ -450,7 +450,8 @@ function loadSalesTable() {
             const total = data.pagination ? data.pagination.total : (data.sales ? data.sales.length : 0);
             const rc = document.getElementById('resultsCount'); if (rc) rc.textContent = `${total} sales loaded`;
         } else {
-            document.getElementById('salesTable').innerHTML = '<div class="p-3 text-center text-muted">No sales found</div>';
+            const msg = data.error || data.message || 'No sales found';
+            document.getElementById('salesTable').innerHTML = `<div class=\"p-3 text-center text-danger\">${msg}</div>`;
         }
     }).catch(err=>{
         console.error('loadSalesTable error', err);
@@ -509,13 +510,49 @@ function openSaleModal(billNo, action) {
         focusSaleModal();
         return;
     }
-    fetch(`/api/sales/${action}/${billNo}`).then(r=>r.text()).then(html=>{
-        document.querySelector('#saleModal .modal-content').innerHTML = html;
+    // view/edit use JSON endpoint to avoid 404
+    const billId = parseInt(String(billNo || '').trim(), 10);
+    if (!billId) { alert('Invalid bill number'); return; }
+    fetch(`/api/sales/${billId}`).then(async r=>{
+        if(!r.ok){
+            const txt = await r.text();
+            throw new Error(`HTTP ${r.status}: ${txt}`);
+        }
+        return r.json();
+    }).then(data=>{
+        if (!data.success && !data.sales) throw new Error(data.error || data.message || 'Sale not found');
+        const sale = data.sale || data.sales || data;
+        const items = sale.items || sale.sales || [];
+        const amount = sale.total_amount || (items.reduce((s,it)=>s+(it.sal_amt||it.amount||0),0));
+        const date = sale.bill_date || '';
+        const content = document.querySelector('#saleModal .modal-content');
+        if (!content) return;
+        content.innerHTML = `
+        <div class="modal-header">
+            <h5 class="modal-title" id="saleModalLabel"><i class="fas fa-file-invoice me-2"></i>${action === 'edit' ? 'Edit' : 'View'} Sale #${sale.bill_no || billNo}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4"><strong>Bill No:</strong> ${sale.bill_no || billNo}</div>
+                <div class="col-md-4"><strong>Date:</strong> ${date}</div>
+                <div class="col-md-4"><strong>Customer:</strong> ${sale.party_name || sale.party_cd || '-'}</div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-striped mb-0"><thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                <tbody>${items.map(it => `<tr><td>${it.item_name || it.it_cd || ''}</td><td>${it.qty || it.quantity || 0}</td><td>${it.rate || 0}</td><td>${it.sal_amt || it.amount || 0}</td></tr>`).join('') || '<tr><td colspan="4" class="text-center text-muted">No items</td></tr>'}</tbody></table>
+            </div>
+            <div class="mt-3 text-end"><strong>Total:</strong> ₹${Number(amount||0).toLocaleString('en-IN',{minimumFractionDigits:2})}</div>
+            ${action === 'edit' ? '<div class="text-muted small mt-2">Edit form not implemented yet.</div>' : ''}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>`;
         modal.show();
         focusSaleModal();
     }).catch(err=>{
-        console.error('load sale form error', err);
-        alert('Error loading sale form');
+        console.error('load sale detail error', err);
+        alert('Error loading sale: ' + err.message);
     });
 }
 
