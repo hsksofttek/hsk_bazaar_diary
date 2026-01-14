@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Cache busting -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="theme-color" content="#111827">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
@@ -22,6 +27,7 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <!-- Alpine.js for interactive components -->
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
     
     {% block head %}{% endblock %}
     
@@ -383,6 +389,61 @@
             vertical-align: middle;
         }
 
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+                line-height: 1.45;
+            }
+            .main-container {
+                flex-direction: column;
+                margin: 8px;
+                min-height: auto;
+            }
+            .sidebar {
+                position: fixed;
+                top: 0;
+                bottom: 0;
+                left: -260px;
+                z-index: 1040;
+                width: 240px;
+                box-shadow: var(--shadow-md);
+                transition: left 0.2s ease;
+            }
+            .sidebar.show {
+                left: 0;
+            }
+            .main-content {
+                padding-top: 56px;
+            }
+            .top-bar {
+                padding: 0.65rem 0.9rem;
+            }
+            .top-bar h1 {
+                font-size: 1.05rem;
+            }
+            .content-area {
+                padding: 0.9rem;
+            }
+            .card,
+            .card-chart,
+            .dashboard-card {
+                border-radius: 10px;
+            }
+            .table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .table thead,
+            .table tbody,
+            .table th,
+            .table td,
+            .table tr {
+                display: revert;
+            }
+        }
         /* Pills & badges */
         .pill {
             display: inline-flex;
@@ -1079,6 +1140,7 @@
                 </div>
             </nav>
         </div>
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <!-- Main Content -->
         <div class="main-content">
@@ -1135,7 +1197,14 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('{{ url_for('static', filename='sw.js') }}').catch(() => {});
+            });
+        }
         // Sidebar toggle: collapse on desktop, slide on mobile
         (function() {
             const sidebar = document.getElementById('sidebar');

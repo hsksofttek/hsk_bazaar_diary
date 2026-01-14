@@ -484,7 +484,7 @@ function renderSalesTable(sales) {
             </td>
         </tr>`;
     }).join('');
-    document.getElementById('salesTable').innerHTML = `<table class="table table-hover mb-0">
+    document.getElementById('salesTable').innerHTML = `<table class="table table-hover mb-0" data-responsive="cards">
         <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Total Amount</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>${rows}</tbody></table>`;
     addActionListeners();

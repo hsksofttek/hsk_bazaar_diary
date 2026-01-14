@@ -289,7 +289,7 @@
                                     </div>
                                 </div>
                                 <div class="table-responsive">
-                                    <table class="table table-hover">
+                                    <table class="table table-hover responsive-cards" data-responsive="cards">
                                         <thead>
                                             <tr>
                                                 <th>Item Code</th>
@@ -964,7 +964,7 @@
                         <td>${m.party_code || '-'} </td>
                         <td>\u20b9${Number(m.amount || 0).toFixed(2)} </td>
                     </tr>`).join('');
-                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Party</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped responsive-cards" data-responsive="cards"><thead><tr><th>Date</th><th>Item</th><th>Type</th><th>Qty</th><th>Reference</th><th>Party</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
             } catch (err) {
                 console.error(err);
                 showAlert('Error loading stock movements', 'danger');
@@ -993,7 +993,7 @@
                         <td>${Number(a.reorder_level || 0).toFixed(2)} </td>
                         <td>${Number(a.shortage || 0).toFixed(2)} </td>
                     </tr>`).join('');
-                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped"><thead><tr><th>Item Code</th><th>Name</th><th>Current</th><th>Min</th><th>Shortage</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+                container.innerHTML = `<div class="table-responsive mt-3"><table class="table table-sm table-striped responsive-cards" data-responsive="cards"><thead><tr><th>Item Code</th><th>Name</th><th>Current</th><th>Min</th><th>Shortage</th></tr></thead><tbody>${rows}</tbody></table></div>`;
             } catch (err) {
                 console.error(err);
                 showAlert('Error loading alerts', 'danger');

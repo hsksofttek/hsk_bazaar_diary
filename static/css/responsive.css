@@ -1,0 +1,169 @@
+/* Responsive overrides */
+:root {
+    --sidebar-width: 240px;
+}
+
+.main-container {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    min-height: 100vh;
+}
+
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 1030;
+}
+
+.btn {
+    min-height: 44px;
+}
+
+@media (max-width: 992px) {
+    .main-container {
+        grid-template-columns: 1fr;
+    }
+    .sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: -260px;
+        width: var(--sidebar-width);
+        z-index: 1040;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        transition: left 0.2s ease;
+    }
+    .sidebar.show {
+        left: 0;
+    }
+    .sidebar-overlay.active {
+        display: block;
+    }
+    .main-content {
+        padding-top: 60px;
+    }
+    .top-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1020;
+    }
+    .content-area {
+        padding: 1rem;
+    }
+    .table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 576px) {
+    body {
+        font-size: 14px;
+    }
+    .top-bar h1 {
+        font-size: 1rem;
+    }
+    .nav-link {
+        padding: 0.65rem;
+    }
+    .card, .dashboard-card, .card-chart {
+        border-radius: 10px;
+    }
+}
+
+/* Mobile form/layout helpers */
+@media (max-width: 768px) {
+    form .form-label {
+        display: block;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    form .form-control,
+    form .form-select,
+    form textarea,
+    form input,
+    form select {
+        width: 100%;
+        min-height: 44px;
+    }
+    form .mb-3,
+    form .form-group,
+    .field-group {
+        margin-bottom: 1rem;
+    }
+    .mobile-action-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: #fff;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+        padding: 0.75rem 1rem;
+    }
+    body {
+        padding-bottom: 80px;
+    }
+    .btn {
+        min-height: 44px;
+    }
+}
+
+/* Card-style tables on mobile */
+@media (max-width: 768px) {
+    table[data-responsive="cards"] {
+        border: 0;
+    }
+    table[data-responsive="cards"] thead {
+        display: none;
+    }
+    table[data-responsive="cards"] tr {
+        display: block;
+        margin-bottom: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        background: #fff;
+        padding: 0.35rem 0.6rem;
+    }
+    table[data-responsive="cards"] td {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        border: 0;
+        border-bottom: 1px solid var(--border-color);
+        padding: 0.45rem 0;
+    }
+    table[data-responsive="cards"] td:last-child {
+        border-bottom: 0;
+    }
+    table[data-responsive="cards"] td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--text-muted);
+        margin-right: 0.5rem;
+    }
+}
+
+/* Mobile overflow guards */
+@media (max-width: 768px) {
+    body, .main-container, .content-area, .card, .dashboard-card, .card-chart {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+    .table[data-responsive="cards"] td,
+    table.responsive-cards td {
+        word-break: break-word;
+        white-space: normal;
+    }
+    input, select, textarea, button {
+        max-width: 100%;
+    }
+}
