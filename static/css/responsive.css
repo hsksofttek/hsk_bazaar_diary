@@ -169,3 +169,12 @@
         max-width: 100%;
     }
 }
+/* Sidebar toggle tap target */
+.sidebar-toggle {
+    z-index: 1100;
+    position: relative;
+}
+@media (max-width: 992px) {
+    .sidebar { z-index: 1050; }
+    .sidebar-overlay { z-index: 1040; }
+}
